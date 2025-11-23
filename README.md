@@ -132,9 +132,9 @@ Financial_DMS是一个基于RAG（检索增强生成）技术的智能财务文�
 
 *注：此处可添加系统运行时的截图，建议包括以下页面：
 - 系统登录界面
-  <img width="625" height="840" alt="image" src="https://github.com/user-attachments/assets/d7123f56-0868-40f3-8e6a-76fc7e5ab777" />
-  <img width="506" height="855" alt="image" src="https://github.com/user-attachments/assets/121c874a-4d5d-4904-bd64-0be5e13bd0a5" />
-  <img width="521" height="554" alt="image" src="https://github.com/user-attachments/assets/420188d6-e110-46dc-b486-011753836e34" />
+<img width="625" height="840" alt="image" src="https://github.com/user-attachments/assets/d7123f56-0868-40f3-8e6a-76fc7e5ab777" />
+<img width="506" height="855" alt="image" src="https://github.com/user-attachments/assets/121c874a-4d5d-4904-bd64-0be5e13bd0a5" />
+<img width="521" height="554" alt="image" src="https://github.com/user-attachments/assets/420188d6-e110-46dc-b486-011753836e34" />
 
 - 文档管理主页
 <img width="1920" height="806" alt="image" src="https://github.com/user-attachments/assets/1df4e080-faa5-49bd-bf54-c508f1a590f9" />
