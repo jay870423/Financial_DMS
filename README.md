@@ -132,9 +132,20 @@ Financial_DMS是一个基于RAG（检索增强生成）技术的智能财务文�
 
 *注：此处可添加系统运行时的截图，建议包括以下页面：
 - 系统登录界面
+  <img width="625" height="840" alt="image" src="https://github.com/user-attachments/assets/d7123f56-0868-40f3-8e6a-76fc7e5ab777" />
+  <img width="506" height="855" alt="image" src="https://github.com/user-attachments/assets/121c874a-4d5d-4904-bd64-0be5e13bd0a5" />
+  <img width="521" height="554" alt="image" src="https://github.com/user-attachments/assets/420188d6-e110-46dc-b486-011753836e34" />
+
 - 文档管理主页
+<img width="1920" height="806" alt="image" src="https://github.com/user-attachments/assets/1df4e080-faa5-49bd-bf54-c508f1a590f9" />
+<img width="1806" height="870" alt="image" src="https://github.com/user-attachments/assets/90082b54-47ea-4c7b-ae66-0c5275fd779a" />
+
 - RAG问答界面
+<img width="1750" height="679" alt="image" src="https://github.com/user-attachments/assets/354de9ce-cd1b-4c8a-aa38-d699acd3b128" />
+<img width="1915" height="681" alt="image" src="https://github.com/user-attachments/assets/0baf1533-d685-4a6c-bda8-37ac9cdc479b" />
+
 - 仪表盘统计页面
+<img width="1915" height="815" alt="image" src="https://github.com/user-attachments/assets/b31719bb-5378-4e5a-8fdf-be70594007ab" />
 
 实际部署后请替换为真实截图。*
 
