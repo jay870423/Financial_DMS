@@ -1,0 +1,17 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.debug.settings.onBuildFailureProceed": true,
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.maven.userSettings": "${workspaceFolder}/.mvn/settings.xml",
+    // 只能在本地窗口的用户设置或远程窗口的远程设置中配置
+    // "maven.executable.path": ""
+    "maven.pomfile.autoUpdateEffectivePOM": true,
+    "maven.terminal.useJavaHome": true,
+    "maven.terminal.customEnv": [
+        {
+            "environmentVariable": "MAVEN_OPTS",
+            "value": "-Xms1g -Xmx2g"
+        }
+    ],
+    "java.dependency.packagePresentation": "hierarchical"
+}
