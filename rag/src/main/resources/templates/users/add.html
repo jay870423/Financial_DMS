@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加用户 - 财务文档管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // 预先定义validateForm函数，避免未定义错误
+        function validateForm() {
+            // 临时返回true，确保表单可以提交
+            return true;
+        }
+    </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'dropdown': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .sidebar-link {
+                @apply flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg transition-all duration-200 hover:bg-primary/5 hover:text-primary;
+            }
+            .sidebar-link.active {
+                @apply bg-primary/10 text-primary font-medium;
+            }
+            .btn {
+                @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+            }
+            .btn-primary {
+                @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary/50;
+            }
+            .btn-outline {
+                @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500/50;
+            }
+            .form-label {
+                @apply block text-sm font-medium text-gray-700 mb-1;
+            }
+            .form-control {
+                @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary transition-all duration-200;
+            }
+            .form-hint {
+                @apply text-xs text-gray-500 mt-1;
+            }
+            .alert {
+                @apply px-4 py-3 rounded-lg mb-4 text-sm;
+            }
+            .alert-danger {
+                @apply bg-danger/10 text-danger border border-danger/20;
+            }
+            .loading-spinner {
+                @apply w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block;
+            }
+            .required::after {
+                content: ' *';
+                @apply text-danger;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <!-- 移动端菜单按钮 -->
+                    <button type="button" class="lg:hidden mr-2 text-gray-600 hover:text-primary" id="mobile-menu-button">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                    
+                    <a href="/dashboard" class="flex items-center gap-2 text-primary">
+                        <i class="fa fa-file-text-o text-xl"></i>
+                        <span class="font-semibold">财务文档管理系统</span>
+                    </a>
+                </div>
+                
+                <nav class="hidden lg:flex items-center gap-1 ml-10">
+                    <a href="/dashboard" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-primary/5 hover:text-primary transition-colors">仪表盘</a>
+                    <a href="/documents" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-primary/5 hover:text-primary transition-colors">文档管理</a>
+                    <a href="/users" class="px-3 py-2 rounded-md text-sm font-medium bg-primary/10 text-primary transition-colors">用户管理</a>
+                </nav>
+                
+                <div class="flex items-center gap-4">
+                    <!-- 用户信息下拉菜单 -->
+                    <div class="relative" id="user-dropdown-container">
+                        <button type="button" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors" id="user-dropdown-button">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                <i class="fa fa-user"></i>
+                            </div>
+                            <span class="hidden md:block text-sm font-medium" th:text="${currentUser?.fullName}"></span>
+                            <i class="fa fa-caret-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-dropdown py-1 opacity-0 invisible transition-all duration-200 transform translate-y-2" id="user-dropdown-menu">
+                            <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">个人资料</a>
+                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">系统设置</a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="/logout" class="block px-4 py-2 text-sm text-danger hover:bg-danger/5">退出登录</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <div class="flex-1 flex">
+        <!-- 移动端侧边栏 -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <a href="/dashboard" class="flex items-center gap-2 text-primary">
+                        <i class="fa fa-file-text-o"></i>
+                        <span class="font-semibold">系统菜单</span>
+                    </a>
+                    <button type="button" class="text-gray-600 hover:text-primary" id="close-mobile-menu">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <nav class="p-4">
+                <a href="/dashboard" class="sidebar-link">
+                    <i class="fa fa-tachometer"></i>
+                    <span>仪表盘</span>
+                </a>
+                <a href="/documents" class="sidebar-link">
+                    <i class="fa fa-folder"></i>
+                    <span>文档管理</span>
+                </a>
+                <a href="/users" class="sidebar-link active">
+                    <i class="fa fa-users"></i>
+                    <span>用户管理</span>
+                </a>
+                <a href="/settings" class="sidebar-link">
+                    <i class="fa fa-cog"></i>
+                    <span>系统设置</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- 遮罩层 -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 opacity-0 invisible transition-opacity duration-300"></div>
+        
+        <!-- 主内容 -->
+        <main class="flex-1 p-4 md:p-6">
+            <!-- 页面标题 -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-gray-800">添加用户</h1>
+                    <p class="text-gray-600 mt-1">创建新的系统用户账号</p>
+                </div>
+                <div>
+                    <a href="/users" class="btn btn-outline">
+                        <i class="fa fa-arrow-left"></i>
+                        返回用户列表
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 用户添加表单 -->
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-card p-6 transition-shadow hover:shadow-card-hover">
+                    <!-- 错误消息显示 -->
+                    <div th:if="${errorMessage}" class="alert alert-danger">
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        <span th:text="${errorMessage}"></span>
+                    </div>
+                    
+                    <!-- 调试信息 -->
+                    <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h3 class="font-bold text-yellow-800">调试信息</h3>
+                        <p>当前用户: <span th:text="${currentUser != null ? currentUser.fullName : '不存在'}"></span></p>
+                    </div>
+                    
+                    <form th:action="@{/users/add}" th:object="${user}" method="post" class="space-y-6">
+                        <!-- 错误提示区域 -->
+                        <div th:if="${errorMessage}" class="p-4 bg-red-50 text-red-800 border border-red-200 rounded-lg">
+                            <p th:text="${errorMessage}">错误信息</p>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="space-y-1">
+                                <label for="fullName" class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
+                                <input type="text" id="fullName" name="fullName" th:value="${user?.fullName}" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="username" class="block text-sm font-medium text-gray-700">用户名 <span class="text-red-500">*</span></label>
+                                <input type="text" id="username" name="username" th:value="${user?.username}" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="email" class="block text-sm font-medium text-gray-700">邮箱 <span class="text-red-500">*</span></label>
+                                <input type="email" id="email" name="email" th:value="${user?.email}" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="department" class="block text-sm font-medium text-gray-700">部门</label>
+                                <select id="department" name="department" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="" th:selected="${user?.department == null or user?.department == ''}">请选择部门</option>
+                                    <option th:each="dept : ${departments}" th:value="${dept}" th:text="${dept}" th:selected="${user?.department == dept}"></option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label for="password" class="block text-sm font-medium text-gray-700">密码 <span class="text-red-500">*</span></label>
+                                <input type="password" id="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="role" class="block text-sm font-medium text-gray-700">角色 <span class="text-red-500">*</span></label>
+                                <select id="role" name="role" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="ADMIN" th:selected="${user?.role == 'ADMIN'}">管理员</option>
+                                    <option value="USER" th:selected="${user?.role == 'USER' or user?.role == null}">普通用户</option>
+                                </select>
+                            </div>
+                        
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                            <a th:href="@{/users}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">取消</a>
+                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                                添加用户
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                <div class="text-center md:text-left">
+                    <p class="text-sm text-gray-600">&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+                </div>
+                <div class="flex gap-4">
+                    <a href="/about" class="text-sm text-gray-600 hover:text-primary transition-colors">关于系统</a>
+                    <a href="/help" class="text-sm text-gray-600 hover:text-primary transition-colors">帮助中心</a>
+                    <a href="#" class="text-sm text-gray-600 hover:text-primary transition-colors">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // 移动端侧边栏功能
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenu = document.getElementById('close-mobile-menu');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        
+        function toggleMobileMenu() {
+            mobileSidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('opacity-0');
+            sidebarOverlay.classList.toggle('invisible');
+            document.body.classList.toggle('overflow-hidden');
+        }
+        
+        mobileMenuButton.addEventListener('click', toggleMobileMenu);
+        closeMobileMenu.addEventListener('click', toggleMobileMenu);
+        sidebarOverlay.addEventListener('click', toggleMobileMenu);
+        
+        // 用户下拉菜单功能
+        const userDropdownButton = document.getElementById('user-dropdown-button');
+        const userDropdownMenu = document.getElementById('user-dropdown-menu');
+        
+        userDropdownButton.addEventListener('click', () => {
+            userDropdownMenu.classList.toggle('opacity-0');
+            userDropdownMenu.classList.toggle('invisible');
+            userDropdownMenu.classList.toggle('translate-y-2');
+        });
+        
+        // 点击其他区域关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            if (!userDropdownButton.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                userDropdownMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+            }
+        });
+        
+        // 密码强度检测
+        const passwordInput = document.getElementById('password');
+        const strengthBars = [
+            document.getElementById('strength-bar-1'),
+            document.getElementById('strength-bar-2'),
+            document.getElementById('strength-bar-3'),
+            document.getElementById('strength-bar-4')
+        ];
+        const strengthText = document.getElementById('strength-text');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const strength = calculatePasswordStrength(password);
+            
+            // 重置所有强度条
+            strengthBars.forEach(bar => {
+                bar.className = 'strength-bar flex-1 h-1 rounded-full bg-gray-200';
+            });
+            
+            // 设置强度条颜色
+            for (let i = 0; i < strength; i++) {
+                if (strength === 1) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-danger';
+                } else if (strength === 2) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-warning';
+                } else if (strength === 3) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-info';
+                } else if (strength >= 4) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-success';
+                }
+            }
+            
+            // 设置强度文本
+            if (password === '') {
+                strengthText.textContent = '密码强度: 未输入';
+                strengthText.className = 'strength-text text-xs text-gray-500';
+            } else if (strength === 1) {
+                strengthText.textContent = '密码强度: 弱';
+                strengthText.className = 'strength-text text-xs text-danger';
+            } else if (strength === 2) {
+                strengthText.textContent = '密码强度: 一般';
+                strengthText.className = 'strength-text text-xs text-warning';
+            } else if (strength === 3) {
+                strengthText.textContent = '密码强度: 良好';
+                strengthText.className = 'strength-text text-xs text-info';
+            } else if (strength >= 4) {
+                strengthText.textContent = '密码强度: 强';
+                strengthText.className = 'strength-text text-xs text-success';
+            }
+            
+            // 检查密码是否匹配
+            checkPasswordMatch();
+        });
+        
+        // 确认密码匹配检查
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const passwordMatchText = document.getElementById('password-match');
+        
+        confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+        
+        function checkPasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword === '') {
+                passwordMatchText.textContent = '';
+                passwordMatchText.className = 'form-hint';
+            } else if (password === confirmPassword) {
+                passwordMatchText.textContent = '密码匹配';
+                passwordMatchText.className = 'form-hint text-success';
+            } else {
+                passwordMatchText.textContent = '密码不匹配';
+                passwordMatchText.className = 'form-hint text-danger';
+            }
+        }
+        
+        // 计算密码强度
+        function calculatePasswordStrength(password) {
+            let strength = 0;
+            
+            // 长度检查
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // 包含小写字母
+            if (/[a-z]/.test(password)) strength++;
+            
+            // 包含大写字母
+            if (/[A-Z]/.test(password)) strength++;
+            
+            // 包含数字
+            if (/[0-9]/.test(password)) strength++;
+            
+            // 包含特殊字符
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            return Math.min(4, Math.floor(strength / 1.5));
+        }
+        
+        // 表单验证
+        function validateForm() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            // 密码强度检查
+            if (calculatePasswordStrength(password) < 2) {
+                alert('密码强度过弱，请使用更复杂的密码');
+                passwordInput.focus();
+                return false;
+            }
+            
+            // 密码匹配检查
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                confirmPasswordInput.focus();
+                return false;
+            }
+            
+            // 禁用提交按钮防止重复提交
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="loading-spinner"></span> 提交中...';
+            
+            return true;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人资料 - 财务文档管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C',
+                        background: '#F2F3F5',
+                        surface: '#FFFFFF',
+                        text: {
+                            primary: '#1D2129',
+                            regular: '#4E5969',
+                            secondary: '#86909C',
+                            placeholder: '#C9CDD4'
+                        },
+                        border: {
+                            primary: '#E5E6EB',
+                            secondary: '#C9CDD4'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        card: '0 2px 12px 0 rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 4px 16px 0 rgba(0, 0, 0, 0.12)',
+                        dropdown: '0 6px 16px -8px rgba(0, 0, 0, 0.1), 0 9px 28px 0 rgba(0, 0, 0, 0.05)'
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .profile-nav-item {
+                @apply flex items-center gap-3 px-4 py-3 text-text-regular rounded-lg transition-all duration-200 hover:bg-primary/5 hover:text-primary;
+            }
+            .profile-nav-item.active {
+                @apply bg-primary/10 text-primary font-medium;
+            }
+            .btn {
+                @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden;
+            }
+            .btn-primary {
+                @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary/50;
+            }
+            .btn-outline {
+                @apply border border-border-primary bg-white text-text-regular hover:bg-background focus:ring-primary/30;
+            }
+            .form-input {
+                @apply w-full px-4 py-2 rounded-md border border-border-primary bg-white text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200;
+            }
+            .avatar-upload-hover {
+                @apply absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 transition-opacity duration-300 hover:opacity-100;
+            }
+            .header-nav-item {
+                @apply px-3 py-2 rounded-md text-sm font-medium text-text-regular hover:bg-primary/5 hover:text-primary transition-colors;
+            }
+            .header-nav-item.active {
+                @apply bg-primary/10 text-primary;
+            }
+            .profile-section-fade-in {
+                @apply transition-opacity duration-500 ease-in-out;
+            }
+            .progress-shine {
+                position: relative;
+                overflow: hidden;
+            }
+            .progress-shine::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                animation: shine 2s infinite;
+            }
+            @keyframes shine {
+                100% {
+                    left: 100%;
+                }
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-background text-text-primary min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-30 transition-all duration-300">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <!-- 移动端菜单按钮 -->
+                    <button type="button" class="lg:hidden mr-2 text-text-secondary hover:text-primary transition-colors">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                    <a href="/dashboard" class="flex items-center gap-2 text-primary">
+                        <i class="fa fa-file-text-o text-xl"></i>
+                        <span class="font-semibold">财务文档管理系统</span>
+                    </a>
+                </div>
+                
+                <nav class="hidden lg:flex items-center gap-1 ml-10">
+                    <a href="/dashboard" class="header-nav-item">仪表盘</a>
+                    <a href="/documents" class="header-nav-item">文档管理</a>
+                    <a href="/users" class="header-nav-item">用户管理</a>
+                </nav>
+                
+                <div class="flex items-center gap-4">
+                    <!-- 搜索框 -->
+                     <div class="relative hidden md:block">
+                        <input type="text" placeholder="搜索文档、用户或功能..." class="bg-background rounded-md py-2 pl-10 pr-4 w-64 focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm transition-all duration-200 focus:bg-white focus:shadow-sm">
+                        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"></i>
+                    </div>
+                    
+                    <!-- 通知图标 -->
+                     <button class="relative text-text-secondary hover:text-primary transition-colors">
+                        <i class="fa fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- 用户信息下拉菜单 -->
+                     <div class="relative" id="user-dropdown-container">
+                        <button type="button" class="flex items-center gap-2 text-text-regular hover:text-primary transition-colors">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <i class="fa fa-user"></i>
+                            </div>
+                            <span class="hidden md:block text-sm font-medium" th:text="${currentUser?.username}">管理员</span>
+                            <i class="fa fa-caret-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-dropdown py-1 opacity-0 invisible transition-all duration-200 transform translate-y-2 z-50">
+                            <a href="/profile" class="block px-4 py-2 text-sm text-text-regular hover:bg-background transition-colors">个人资料</a>
+                            <a href="/settings" class="block px-4 py-2 text-sm text-text-regular hover:bg-background transition-colors">系统设置</a>
+                            <div class="border-t border-border-primary my-1">
+                            <a href="/logout" class="block px-4 py-2 text-sm text-danger hover:bg-danger/5 transition-colors">退出登录</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区域 -->
+     <main class="flex-1 p-4 md:p-6">
+        <!-- 页面标题 -->
+         <div class="mb-8">
+            <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-text-primary mb-2">个人资料</h1>
+            <p class="text-text-secondary">管理您的个人信息和账户设置</p>
+        </div>
+        <!-- 个人资料内容 -->
+         <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 mb-8">
+            <!-- 侧边栏 -->
+             <div class="bg-white rounded-xl shadow-card p-6 sticky top-20 self-start animate-on-load" style="animation-delay: 0ms">
+                <div class="profile-avatar-container relative text-center mb-6">
+                    <div class="relative inline-block">
+                        <img th:src="@{/images/avatar-placeholder.png}" alt="用户头像" class="w-32 h-32 rounded-full object-cover border-4 border-primary/10 mx-auto block">
+                        <div class="avatar-upload-hover">
+                            <i class="fa fa-camera text-white text-xl"></i>
+                        </div>
+                        <label for="avatar-upload" class="absolute bottom-0 right-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-primary/90 transition-all duration-300 hover:scale-110">
+                            <i class="fa fa-pencil"></i>
+                        </label>
+                    </div>
+                    <input type="file" id="avatar-upload" class="hidden">
+                </div>
+                <!-- 个人信息 -->
+                <h2 class="text-xl font-bold text-text-primary mb-1 text-center"><span th:text="${currentUser?.name}">管理员</span></h2>
+                <p class="text-text-secondary mb-6 text-center"><span th:text="${currentUser?.role}">管理员</span></p>
+                <!-- 导航 -->
+                <nav class="profile-nav">
+                    <a href="#personal-info" class="profile-nav-item active group">
+                        <div class="w-5 h-5 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <span>基本信息</span>
+                    </a>
+                    <a href="#security" class="profile-nav-item group">
+                        <div class="w-5 h-5 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                            <i class="fa fa-shield"></i>
+                        </div>
+                        <span>安全设置</span>
+                    </a>
+                    <a href="#activity" class="profile-nav-item group">
+                        <div class="w-5 h-5 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <span>活动日志</span>
+                    </a>
+                </nav>
+                <!-- 存储空间使用情况 -->
+                <div class="mt-8 p-4 bg-background rounded-lg">
+                    <h3 class="text-sm font-semibold text-text-primary mb-3">存储空间使用情况</h3>
+                    <div class="w-full bg-border-primary rounded-full h-2 mb-2">
+                        <div class="bg-primary h-2 rounded-full progress-shine" style="width: 68%"></div>
+                    </div>
+                    <p class="text-xs text-text-secondary">已使用 8.2 GB / 12.0 GB (68%)</p>
+                </div>
+            </div>
+            <!-- 主要内容 -->
+             <div class="bg-white rounded-xl shadow-card overflow-hidden animate-on-load" style="animation-delay: 100ms">
+                <!-- 基本信息部分 -->
+                 <section id="personal-info" class="p-6 border-b border-border-primary profile-section-fade-in">
+                    <h2 class="text-xl font-bold text-text-primary mb-6 pb-2 border-b border-border-primary">基本信息</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label for="name" class="block text-text-regular font-medium mb-2">姓名</label>
+                            <input type="text" id="name" name="name" th:value="${currentUser?.name}" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="block text-text-regular font-medium mb-2">邮箱</label>
+                            <input type="email" id="email" name="email" th:value="${currentUser?.email}" class="form-input" required>
+                        </div>
+                    </div>
+                    <!-- 成功/错误消息 -->
+                    <div th:if="${successMessage}" class="bg-success/10 text-success rounded-lg p-4 mb-6 flex items-start gap-3 transition-all duration-300">
+                       
+                    <!-- 成功/错误消息 -->
+                     <div th:if="${successMessage}" class="bg-success/10 text-success rounded-lg p-4 mb-6 flex items-start gap-3 transition-all duration-300">
+                        <div class="mt-0.5 text-success">
+                            <i class="fa fa-check-circle text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">更新成功</p>
+                            <p th:text="${successMessage}">个人信息已成功更新。</p>
+                        </div>
+                    </div>
+                    <!-- 更新按钮 -->
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn-primary px-6 py-2">更新信息</button>
+                    </div>
+                    <!-- 错误消息 -->
+                    <div th:if="${errorMessage}" class="bg-danger/10 text-danger rounded-lg p-4 mb-6 flex items-start gap-3 transition-all duration-300">
+                        <div class="mt-0.5 text-danger">
+                            <i class="fa fa-exclamation-circle text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">更新失败</p>
+                            <p th:text="${errorMessage}">更新个人信息时出现错误。</p>
+                        </div>
+                    </div>
+                    <!-- 表单 -->
+                    <form th:action="@{/profile/update}" method="post" class="profile-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="form-group">
+                                <label for="name" class="block text-text-regular font-medium mb-2">姓名</label>
+                                <input type="text" id="name" name="name" th:value="${currentUser?.name}" class="form-input" required>
+                            </div>
+                            <!-- 用户名 -->
+                            <div class="form-group">
+                                <label for="username" class="block text-text-regular font-medium mb-2">用户名</label>
+                                <input type="text" id="username" name="username" th:value="${currentUser?.username}" class="form-input bg-background cursor-not-allowed" disabled>
+                                <p class="text-text-secondary text-xs mt-1">用户名不可修改</p>
+                            </div>
+                            <!-- 邮箱 -->
+                            <div class="form-group">
+                                <label for="email" class="block text-text-regular font-medium mb-2">邮箱</label>
+                                <input type="email" id="email" name="email" th:value="${currentUser?.email}" class="form-input" required>
+                            </div>
+                            <!-- 部门 -->
+                            <div class="form-group">
+                                <label for="department" class="block text-text-regular font-medium mb-2">部门</label>
+                                <input type="text" id="department" name="department" th:value="${currentUser?.department}" class="form-input">
+                            </div>
+                            <!-- 个人简介 -->
+                            <div class="form-group md:col-span-2">
+                                <label for="bio" class="block text-text-regular font-medium mb-2">个人简介</label>
+                                <textarea id="bio" name="bio" rows="4" th:text="${currentUser?.bio}" class="form-input resize-none"></textarea>
+                            </div>
+                        </div>
+                        <!-- 更新按钮 -->
+                        <div class="flex flex-wrap gap-3 justify-end">
+                            <button type="reset" class="btn btn-outline group">
+                                <i class="fa fa-refresh transition-transform duration-200 group-hover:rotate-90"></i>
+                                <span>取消</span>
+                                <span class="ripple"></span>
+                            </button>
+                            <button type="submit" class="btn btn-primary group">
+                                <i class="fa fa-save transition-transform duration-200 group-hover:scale-110"></i>
+                                <span>保存更改</span>
+                                <span class="ripple"></span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+                <!-- 个人信息部分 -->
+                <!-- 密码修改部分 -->
+                <section id="security" class="p-6 border-b border-border-primary profile-section-fade-in opacity-0 invisible">
+                    <h2 class="text-xl font-bold text-text-primary mb-6 pb-2 border-b border-border-primary">安全设置</h2>
+                    <!-- 密码修改表单 -->
+                    <div class="bg-background rounded-xl p-6 mb-6 animate-on-load" style="animation-delay: 200ms">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">修改密码</h3>
+                        <form th:action="@{/profile/change-password}" method="post" id="change-password-form">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="form-group">
+                                    <label for="currentPassword" class="block text-text-regular font-medium mb-2">当前密码</label>
+                                    <div class="relative">
+                                        <input type="password" id="currentPassword" name="currentPassword" class="form-input pr-10" required>
+                                        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors toggle-password"
+                                                data-target="currentPassword">
+                                            <i class="fa fa-eye-slash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- 确认当前密码 -->
+                                <div class="form-group">
+                                    <label for="confirmCurrentPassword" class="block text-text-regular font-medium mb-2">确认当前密码</label>
+                                    <div class="relative">
+                                        <input type="password" id="confirmCurrentPassword" name="confirmCurrentPassword" class="form-input pr-10" required>
+                                        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors toggle-password"
+                                                data-target="confirmCurrentPassword">
+                                            <i class="fa fa-eye-slash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- 新密码 -->
+                                <div class="form-group">
+                                    <label for="newPassword" class="block text-text-regular font-medium mb-2">新密码</label>
+                                    <div class="relative">
+                                        <input type="password" id="newPassword" name="newPassword" class="form-input pr-10" required>
+                                        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors toggle-password"
+                                                data-target="newPassword">
+                                            <i class="fa fa-eye-slash"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-text-secondary text-xs mt-1">密码长度至少8位，包含大小写字母、数字和特殊字符</p>
+                                    <div class="mt-2">
+                                        <div class="flex items-center gap-2 text-xs mb-1">
+                                            <span class="password-strength-label font-medium">密码强度:</span>
+                                            <span id="password-strength-text" class="text-text-secondary">未输入</span>
+                                        </div>
+                                        <div class="w-full bg-border-primary rounded-full h-1.5">
+                                            <div id="password-strength-bar" class="h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 确认新密码 -->
+                                <div class="form-group md:col-span-2">
+                                    <label for="confirmPassword" class="block text-text-regular font-medium mb-2">确认新密码</label>
+                                    <div class="relative">
+                                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input pr-10" required>
+                                        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors toggle-password"
+                                                data-target="confirmPassword">
+                                            <i class="fa fa-eye-slash"></i>
+                                        </button>
+                                    </div>
+                                    <p id="password-match-message" class="text-text-secondary text-xs mt-1"></p>
+                                </div>
+                            </div>
+                            <!-- 更新密码按钮 -->
+                            <div class="flex justify-end">
+                                <button type="submit" class="btn btn-primary group">
+                                    <i class="fa fa-key transition-transform duration-200 group-hover:rotate-12"></i>
+                                    <span>更新密码</span>
+                                    <span class="ripple"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- 两步验证部分 -->
+                    <div class="bg-primary/5 border border-primary/20 rounded-xl p-6 animate-on-load" style="animation-delay: 300ms">
+                        <h3 class="text-lg font-semibold text-text-primary mb-3 flex items-center">
+                            两步验证 <span class="ml-2 bg-warning/20 text-warning text-xs px-3 py-1 rounded-full font-medium">已关闭</span>
+                        </h3>
+                        <p class="text-text-secondary mb-4">开启两步验证可以提高您账户的安全性，登录时需要输入额外的验证码。</p>
+                        <button class="btn btn-outline group">
+                            <i class="fa fa-lock-open transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span>开启两步验证</span>
+                            <span class="ripple"></span>
+                        </button>
+                    </div>
+                </section>
+                <!-- 个人资料部分 -->
+                <section id="profile" class="p-6 profile-section-fade-in opacity-0 invisible">
+                    <h2 class="text-xl font-bold text-text-primary mb-6 pb-2 border-b border-border-primary">个人资料</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label for="username" class="block text-text-regular font-medium mb-2">用户名</label>
+                            <input type="text" id="username" name="username" class="form-input" value="user123" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="block text-text-regular font-medium mb-2">邮箱</label>
+                            <input type="email" id="email" name="email" class="form-input" value="user@example.com" readonly>
+                        </div>
+                    </div>
+                </section>
+                <!-- 活动日志部分 -->
+                <section id="activity" class="p-6 profile-section-fade-in opacity-0 invisible">
+                    <h2 class="text-xl font-bold text-text-primary mb-6 pb-2 border-b border-border-primary">最近活动</h2>
+                    <!-- 最近活动列表 -->
+                    <div class="space-y-4">
+                        <div class="flex items-start p-4 rounded-lg hover:bg-background transition-colors duration-200 animate-on-load" style="animation-delay: 400ms">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mr-4">
+                                <i class="fa fa-upload"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-text-primary mb-1">上传了文档 "2024年第一季度财务报表.pdf"</div>
+                                <div class="text-text-secondary text-sm">今天 14:30</div>
+                            </div>
+                        </div>
+                        <!-- 最近活动列表项 -->
+                        <div class="flex items-start p-4 rounded-lg hover:bg-background transition-colors duration-200 animate-on-load" style="animation-delay: 500ms">
+                            <div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center text-success flex-shrink-0 mr-4">
+                                <i class="fa fa-user-edit"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-text-primary mb-1">更新了个人资料信息</div>
+                                <div class="text-text-secondary text-sm">昨天 09:15</div>
+                            </div>
+                        </div>
+                        <!-- 最近活动列表项 -->
+                        <div class="flex items-start p-4 rounded-lg hover:bg-background transition-colors duration-200 animate-on-load" style="animation-delay: 600ms">
+                            <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary flex-shrink-0 mr-4">
+                                <i class="fa fa-download"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-text-primary mb-1">下载了文档 "2023年度财务审计报告.docx"</div>
+                                <div class="text-text-secondary text-sm">2024-06-10 16:45</div>
+                            </div>
+                        </div>
+                        <!-- 最近活动列表项 -->
+                        <div class="flex items-start p-4 rounded-lg hover:bg-background transition-colors duration-200 animate-on-load" style="animation-delay: 700ms">
+                            <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-warning flex-shrink-0 mr-4">
+                                <i class="fa fa-sign-in"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-text-primary mb-1">从 IP: 192.168.1.100 登录系统</div>
+                                <div class="text-text-secondary text-sm">2024-06-09 08:22</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 查看更多活动按钮 -->
+                    <div class="mt-6 text-center">
+                        <a href="#" class="text-primary hover:text-primary/80 text-sm font-medium flex items-center justify-center gap-1 transition-colors duration-200 group">
+                            <span>查看更多活动</span>
+                            <i class="fa fa-angle-down transition-transform duration-200 group-hover:translate-y-1"></i>
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-border-primary py-4 mt-auto rounded-lg shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                <div class="text-center md:text-left">
+                    <p class="text-sm text-text-secondary">&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+                </div>
+                <div class="flex gap-4">
+                    <a href="/about" class="text-sm text-text-secondary hover:text-primary transition-colors">关于系统</a>
+                    <a href="/help" class="text-sm text-text-secondary hover:text-primary transition-colors">帮助中心</a>
+                    <a href="#" class="text-sm text-text-secondary hover:text-primary transition-colors">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 菜单项切换功能
+            const menuItems = document.querySelectorAll('.profile-nav-item');
+            const sections = document.querySelectorAll('.profile-section-fade-in');
+            
+            // 初始化显示第一个部分
+            if (sections.length > 0) {
+                sections[0].classList.remove('opacity-0', 'invisible');
+            }
+            
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 获取目标部分的ID
+                    const targetId = this.getAttribute('href');
+                    const targetSection = document.querySelector(targetId);
+                    
+                    if (!targetSection) return;
+                    
+                    // 移除所有菜单项的活动状态
+                    menuItems.forEach(mi => mi.classList.remove('active'));
+                    
+                    // 添加当前菜单项的活动状态
+                    this.classList.add('active');
+                    
+                    // 隐藏所有部分
+                    sections.forEach(section => {
+                        section.classList.add('opacity-0', 'invisible');
+                    });
+                    
+                    // 显示目标部分
+                    setTimeout(() => {
+                        targetSection.classList.remove('opacity-0', 'invisible');
+                    }, 300);
+                    
+                    // 平滑滚动到内容区域顶部
+                    const contentArea = document.querySelector('.bg-white.rounded-xl.shadow-card');
+                    if (contentArea) {
+                        contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+            
+            // 密码验证功能
+            const newPassword = document.getElementById('newPassword');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const passwordMatchMessage = document.getElementById('password-match-message');
+            const passwordStrengthBar = document.getElementById('password-strength-bar');
+            const passwordStrengthText = document.getElementById('password-strength-text');
+            const changePasswordForm = document.getElementById('change-password-form');
+            
+            // 密码匹配验证
+            function validatePasswordMatch() {
+                if (newPassword.value && confirmPassword.value) {
+                    if (newPassword.value === confirmPassword.value) {
+                        passwordMatchMessage.textContent = '密码匹配';
+                        passwordMatchMessage.className = 'text-success text-xs mt-1';
+                        return true;
+                    } else {
+                        passwordMatchMessage.textContent = '密码不匹配';
+                        passwordMatchMessage.className = 'text-danger text-xs mt-1';
+                        return false;
+                    }
+                } else {
+                    passwordMatchMessage.textContent = '';
+                    return false;
+                }
+            }
+            
+            // 密码强度检查
+            function checkPasswordStrength() {
+                const password = newPassword.value;
+                if (!password) {
+                    passwordStrengthBar.style.width = '0%';
+                    passwordStrengthText.textContent = '未输入';
+                    passwordStrengthText.className = 'text-text-secondary';
+                    return;
+                }
+                
+                let strength = 0;
+                
+                // 长度检查
+                if (password.length >= 8) strength += 1;
+                // 包含小写字母
+                if (/[a-z]/.test(password)) strength += 1;
+                // 包含大写字母
+                if (/[A-Z]/.test(password)) strength += 1;
+                // 包含数字
+                if (/[0-9]/.test(password)) strength += 1;
+                // 包含特殊字符
+                if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+                
+                // 更新密码强度条和文本
+                const percentage = (strength / 5) * 100;
+                passwordStrengthBar.style.width = percentage + '%';
+                
+                // 设置颜色和文本
+                if (strength <= 2) {
+                    passwordStrengthBar.className = 'h-1.5 rounded-full transition-all duration-300 bg-danger';
+                    passwordStrengthText.textContent = '弱';
+                    passwordStrengthText.className = 'text-danger';
+                } else if (strength <= 3) {
+                    passwordStrengthBar.className = 'h-1.5 rounded-full transition-all duration-300 bg-warning';
+                    passwordStrengthText.textContent = '中';
+                    passwordStrengthText.className = 'text-warning';
+                } else if (strength <= 4) {
+                    passwordStrengthBar.className = 'h-1.5 rounded-full transition-all duration-300 bg-secondary';
+                    passwordStrengthText.textContent = '良好';
+                    passwordStrengthText.className = 'text-secondary';
+                } else {
+                    passwordStrengthBar.className = 'h-1.5 rounded-full transition-all duration-300 bg-success';
+                    passwordStrengthText.textContent = '强';
+                    passwordStrengthText.className = 'text-success';
+                }
+            }
+            
+            // 监听密码输入变化
+            newPassword.addEventListener('input', function() {
+                checkPasswordStrength();
+                validatePasswordMatch();
+            });
+            
+            confirmPassword.addEventListener('input', validatePasswordMatch);
+            
+            // 表单提交前验证
+            changePasswordForm.addEventListener('submit', function(event) {
+                if (!validatePasswordMatch()) {
+                    event.preventDefault();
+                    alert('请确保新密码与确认密码一致');
+                }
+            });
+            
+            // 头像上传预览
+            const avatarUpload = document.getElementById('avatar-upload');
+            const profileAvatar = document.querySelector('.profile-avatar-container img');
+            
+            avatarUpload.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // 检查文件类型
+                    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('请上传有效的图片文件 (JPEG, PNG, GIF)');
+                        return;
+                    }
+                    
+                    // 检查文件大小 (最大 2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('图片大小不能超过 2MB');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profileAvatar.src = e.target.result;
+                        
+                        // 添加图片更新动画
+                        profileAvatar.classList.add('animate-pulse-slow');
+                        setTimeout(() => {
+                            profileAvatar.classList.remove('animate-pulse-slow');
+                        }, 1500);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 密码显示/隐藏切换
+            document.querySelectorAll('.toggle-password').forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const targetInput = document.getElementById(targetId);
+                    
+                    if (targetInput) {
+                        const icon = this.querySelector('i');
+                        
+                        if (targetInput.type === 'password') {
+                            targetInput.type = 'text';
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                        } else {
+                            targetInput.type = 'password';
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                        }
+                    }
+                });
+            });
+            
+            // 为按钮添加波纹效果
+            document.querySelectorAll('button, a[href]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    if (this.tagName === 'A' && this.href.includes('javascript:') || this.classList.contains('toggle-password')) return;
+                    
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('absolute', 'bg-white', 'opacity-30', 'rounded-full', 'transform', 'scale-0', 'animate-ping');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // 添加页面加载动画
+            const animatedElements = document.querySelectorAll('.animate-on-load');
+            
+            animatedElements.forEach((element) => {
+                // 设置初始样式
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                
+                // 动画延迟，从元素的style中获取
+                const delay = element.style.animationDelay || '0ms';
+                
+                // 使用setTimeout应用动画
+                setTimeout(() => {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, parseInt(delay));
+            });
+            
+            // 导航栏滚动效果
+            const header = document.querySelector('header');
+            let lastScrollTop = 0;
+            
+            window.addEventListener('scroll', function() {
+                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                if (scrollTop > 10) {
+                    header.classList.add('shadow');
+                } else {
+                    header.classList.remove('shadow');
+                }
+                
+                lastScrollTop = scrollTop;
+            });
+            
+            // 处理URL锚点
+            const urlHash = window.location.hash;
+            if (urlHash) {
+                const targetMenuItem = document.querySelector(`.profile-nav-item[href="${urlHash}"]`);
+                if (targetMenuItem) {
+                    targetMenuItem.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

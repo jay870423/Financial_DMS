@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>访问被拒绝 - 财务文档管理系统</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义按钮样式 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF',
+                        secondary: '#3B82F6',
+                        accent: '#2563EB',
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .btn {
+                @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
+            }
+            .btn-primary {
+                @apply bg-primary text-white hover:bg-primary/90 focus:ring-2 focus:ring-primary/50 focus:outline-none;
+            }
+            .btn-secondary {
+                @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none;
+            }
+            .btn-outline {
+                @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none;
+            }
+        }
+    </style>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .error-icon svg {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="flex flex-col items-center justify-center min-h-[80vh] text-center p-5 md:p-10">
+        <div class="w-40 h-40 md:w-48 md:h-48 mb-7 flex items-center justify-center bg-amber-50 rounded-full">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 9V11" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 15H12.01" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        
+        <h1 class="text-[120px] font-bold text-amber-500 mb-5 leading-none">403</h1>
+        <h2 class="text-[36px] font-semibold text-gray-900 mb-4">访问被拒绝</h2>
+        <p class="text-[18px] text-gray-600 mb-10 max-w-[600px]">
+            <span th:text="${message ?: '抱歉，您没有权限访问此资源。'}">抱歉，您没有权限访问此资源。</span>
+        </p>
+        
+        <div class="flex flex-wrap gap-5 justify-center">
+            <a href="/dashboard" class="btn btn-primary flex items-center gap-2">
+                <i class="fa fa-home"></i>
+                返回首页
+            </a>
+            <a href="javascript:history.back()" class="btn btn-outline flex items-center gap-2">
+                <i class="fa fa-arrow-left"></i>
+                返回上一页
+            </a>
+            <a href="/login" class="btn btn-secondary flex items-center gap-2" th:if="${#authentication == null or not #authentication.isAuthenticated()}">
+                <i class="fa fa-sign-in"></i>
+                登录
+            </a>
+        </div>
+    </div>
+    
+    <!-- 简单页脚，不依赖外部样式 -->
+    <footer class="py-6 text-center text-gray-500 text-sm mt-10">
+        <p>&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+    </footer>
+</body>
+</html>

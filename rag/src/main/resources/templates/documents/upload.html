@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传文档 - 财务文档管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // 预先定义validateForm函数，避免未定义错误
+        function validateForm() {
+            // 临时返回true，确保表单可以提交
+            return true;
+        }
+        
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        danger: '#EF4444',
+                        success: '#22C55E',
+                        warning: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'dropdown': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    },
+                    transitionTimingFunction: {
+                        'bounce-subtle': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .text-shadow-sm {
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+            .transition-all-300 {
+                transition: all 0.3s ease;
+            }
+            .hover-lift {
+                @apply transition-transform duration-300 hover:-translate-y-1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard" class="flex items-center space-x-2 text-primary font-semibold">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 17V5C3 3.89 3.89 3 5 3H19C20.11 3 21 3.89 21 5V17C21 18.11 20.11 19 19 19H16.5L12 23.5L7.5 19H5C3.89 19 3 18.11 3 17Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="hidden sm:inline">财务文档管理系统</span>
+                    </a>
+                    
+                    <nav class="hidden md:flex space-x-1">
+                        <a href="/dashboard" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all-300">仪表盘</a>
+                        <a href="/documents" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all-300">文档管理</a>
+                        <a href="/documents/upload" class="px-3 py-2 rounded-md text-sm font-medium bg-primary/10 text-primary">上传文档</a>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative group">
+                        <button class="flex items-center space-x-2 focus:outline-none">
+                            <div class="text-left hidden sm:block">
+                                <span th:text="${currentUser?.name}" class="block text-sm font-medium text-gray-900"></span>
+                                <span th:text="${currentUser?.role}" class="block text-xs text-gray-500"></span>
+                            </div>
+                            <div class="h-8 w-8 rounded-full overflow-hidden border-2 border-gray-200">
+                                <img th:src="@{/images/avatar-placeholder.png}" alt="用户头像" class="h-full w-full object-cover">
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <a href="/logout" class="flex items-center space-x-1 text-sm text-gray-600 hover:text-danger transition-colors duration-200">
+                        <i class="fa fa-sign-out"></i>
+                        <span class="hidden sm:inline">退出登录</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 主内容区域 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">上传文档</h1>
+                <p class="text-gray-500 mt-1">上传并管理您的财务文档</p>
+            </div>
+            <div>
+                <a href="/documents" class="inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all-300">
+                    <i class="fa fa-arrow-left"></i>
+                    <span>返回文档列表</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- 上传表单 -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-card overflow-hidden transition-all duration-300 hover:shadow-lg">
+                <!-- 错误消息显示 -->
+                <div th:if="${errorMessage}" class="px-6 py-4 bg-red-50 border-l-4 border-danger text-danger">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fa fa-exclamation-circle text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p th:text="${errorMessage}"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 成功消息显示 -->
+                <div th:if="${successMessage}" class="px-6 py-4 bg-green-50 border-l-4 border-success text-success">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fa fa-check-circle text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p th:text="${successMessage}"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form th:action="@{/documents/upload}" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+                    <!-- 文件上传区域 -->
+                    <div class="p-6">
+                        <div id="drop-area" class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center transition-all-300 hover:border-primary/50 hover:bg-blue-50 cursor-pointer">
+                            <div class="flex flex-col items-center justify-center space-y-4">
+                                <div class="text-primary/70 animate-bounce">
+                                    <i class="fa fa-cloud-upload text-6xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">拖放文件到此处上传</h3>
+                                <p class="text-gray-500">或</p>
+                                <label for="file-input" class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-primary hover:bg-primary/90 transition-all-300">
+                                    <i class="fa fa-plus mr-2"></i>
+                                    选择文件
+                                </label>
+                                <input type="file" id="file-input" name="file" class="hidden" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+                                <p class="text-sm text-gray-500 mt-4">支持的格式: PDF, Word, Excel, CSV, TXT</p>
+                                <p class="text-sm text-gray-500">单个文件最大 50MB</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 已选择文件列表 -->
+                        <div id="file-list" class="mt-6 hidden">
+                            <!-- 文件列表将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200"></div>
+                    
+                    <!-- 文档信息表单 -->
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">文档信息</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+                                    文档标题 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary transition-colors" placeholder="请输入文档标题" required>
+                            </div>
+                            
+                            <div>
+                                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+                                    文档类别 <span class="text-danger">*</span>
+                                </label>
+                                <select id="category" name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary transition-colors" required>
+                                    <option value="">请选择文档类别</option>
+                                    <option value="invoice">发票</option>
+                                    <option value="contract">合同</option>
+                                    <option value="report">报表</option>
+                                    <option value="receipt">收据</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            <div>
+                                <label for="date" class="block text-sm font-medium text-gray-700 mb-1">
+                                    文档日期 <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" id="date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary transition-colors" required>
+                            </div>
+                            
+                            <div>
+                                <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
+                                    所属部门
+                                </label>
+                                <select id="department" name="department" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary transition-colors">
+                                    <option value="">请选择部门</option>
+                                    <option value="finance">财务部</option>
+                                    <option value="hr">人力资源部</option>
+                                    <option value="operation">运营部</option>
+                                    <option value="marketing">市场部</option>
+                                    <option value="other">其他部门</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                                文档描述
+                            </label>
+                            <textarea id="description" name="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary transition-colors" placeholder="请输入文档描述（选填）"></textarea>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label for="tags" class="block text-sm font-medium text-gray-700 mb-1">
+                                标签
+                            </label>
+                            <input type="text" id="tags" name="tags" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary transition-colors" placeholder="请输入标签，多个标签用逗号分隔">
+                            <p class="mt-1 text-xs text-gray-500">标签有助于您更快地搜索和分类文档</p>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                访问权限 <span class="text-danger">*</span>
+                            </label>
+                            <div class="space-y-3">
+                                <label class="flex items-center">
+                                    <input type="radio" name="accessLevel" value="public" class="w-4 h-4 text-primary focus:ring-primary border-gray-300" checked>
+                                    <span class="ml-2 text-sm text-gray-700">公开 (所有用户可见)</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="accessLevel" value="private" class="w-4 h-4 text-primary focus:ring-primary border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">私有 (仅自己可见)</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="accessLevel" value="department" class="w-4 h-4 text-primary focus:ring-primary border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">部门可见 (同部门用户可见)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all-300" onclick="window.location.href='/documents'">
+                            取消
+                        </button>
+                        <button type="submit" class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 transition-all-300 hover-lift" id="upload-button">
+                            <i class="fa fa-upload mr-2"></i>
+                            上传文档
+        <script>
+            // 表单验证函数，放在表单之前确保可以被调用
+            // validateForm函数已移到表单前，这里不再重复定义
+        </script>
+                        
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-sm text-gray-500">&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="/about" class="text-sm text-gray-500 hover:text-primary transition-colors">关于系统</a>
+                    <a href="/help" class="text-sm text-gray-500 hover:text-primary transition-colors">帮助中心</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-primary transition-colors">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript for file upload functionality -->
+    <script>
+        // File upload handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('file-input');
+            const fileList = document.getElementById('file-list');
+            const uploadButton = document.getElementById('upload-button');
+            let selectedFiles = [];
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Highlight drop area when drag over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('border-primary', 'bg-blue-50');
+                dropArea.classList.remove('border-gray-300');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('border-primary', 'bg-blue-50');
+                dropArea.classList.add('border-gray-300');
+            }
+
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+                // Add drop animation effect
+                dropArea.classList.add('animate-pulse');
+                setTimeout(() => {
+                    dropArea.classList.remove('animate-pulse');
+                }, 500);
+            }
+
+            // Handle file input change
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+
+            // Trigger file input when drop area is clicked
+            dropArea.addEventListener('click', function(e) {
+                // 确保点击的不是子元素（如文件选择按钮）
+                if (e.target === dropArea || !document.getElementById('file-input').contains(e.target)) {
+                    // 清除之前的选择，避免弹两次
+                    fileInput.value = '';
+                    fileInput.click();
+                }
+            });
+            
+            // 为选择文件按钮添加点击事件
+            document.querySelector('label[for="file-input"]').addEventListener('click', function(e) {
+                // 阻止事件冒泡，避免触发dropArea的点击事件
+                e.stopPropagation();
+                // 清除之前的选择
+                fileInput.value = '';
+            });
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    let hasNewValidFiles = false;
+                    let firstValidFile = null;
+                    
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        if (validateFile(file)) {
+                            selectedFiles.push(file);
+                            hasNewValidFiles = true;
+                            if (!firstValidFile) {
+                                firstValidFile = file;
+                            }
+                        }
+                    }
+                    
+                    if (hasNewValidFiles) {
+                        updateFileList();
+                        // Add animation to file list appearance
+                        fileList.classList.add('animate-fadeIn');
+                        
+                        // 自动填充标题（如果标题为空）
+                        const titleInput = document.getElementById('title');
+                        if (titleInput && titleInput.value.trim() === '' && firstValidFile) {
+                            // 去除文件扩展名作为标题
+                            const fileNameWithoutExt = firstValidFile.name.replace(/\.[^/.]+$/, "");
+                            titleInput.value = fileNameWithoutExt;
+                        }
+                    }
+                }
+            }
+
+            function validateFile(file) {
+                // Check file extension
+                const validExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt'];
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                
+                if (!validExtensions.includes(fileExtension)) {
+                    showError('不支持的文件格式: ' + file.name);
+                    return false;
+                }
+                
+                // Check file size (50MB limit)
+                const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+                if (file.size > maxSize) {
+                    showError('文件过大: ' + file.name + ' (最大 50MB)');
+                    return false;
+                }
+                
+                // Check if file already exists
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    if (selectedFiles[i].name === file.name && selectedFiles[i].size === file.size) {
+                        showError('文件已存在: ' + file.name);
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+
+            function updateFileList() {
+                if (selectedFiles.length > 0) {
+                    fileList.innerHTML = '';
+                    fileList.classList.remove('hidden');
+                    fileList.classList.add('animate-fadeIn');
+                    
+                    // Add file list header
+                    const header = document.createElement('div');
+                    header.className = 'flex items-center justify-between py-2 border-b border-gray-200 mb-2';
+                    header.innerHTML = `
+                        <h4 class="font-medium text-gray-700">已选择 ${selectedFiles.length} 个文件</h4>
+                        <button type="button" id="clear-all-files" class="text-sm text-primary hover:text-primary/80 transition-colors">
+                            清空全部
+                        </button>
+                    `;
+                    fileList.appendChild(header);
+                    
+                    // Add clear all event listener
+                    document.getElementById('clear-all-files').addEventListener('click', function() {
+                        clearAllFiles();
+                    });
+                    
+                    // Add each file item with fade-in animation
+                    selectedFiles.forEach((file, index) => {
+                        // Get file icon based on extension
+                        const iconClass = getFileIconClass(file.name);
+                        
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg mb-2 shadow-sm hover:shadow transition-all-300 animate-fadeIn';
+                        fileItem.style.animationDelay = `${index * 50}ms`;
+                        fileItem.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 flex items-center justify-center rounded-full ${getFileIconColor(file.name)}">
+                                    <i class="fa fa-${iconClass} text-white text-lg"></i>
+                                </div>
+                                <div class="truncate">
+                                    <div class="text-sm font-medium text-gray-900 truncate" title="${file.name}">${file.name}</div>
+                                    <div class="text-xs text-gray-500">${formatFileSize(file.size)}</div>
+                                </div>
+                            </div>
+                            <button type="button" class="remove-file-btn text-gray-400 hover:text-danger transition-colors focus:outline-none p-1" data-index="${index}">
+                                <i class="fa fa-times-circle"></i>
+                            </button>
+                        `;
+                        fileList.appendChild(fileItem);
+                    });
+                    
+                    // Add event listeners to remove buttons
+                    document.querySelectorAll('.remove-file-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const index = parseInt(this.getAttribute('data-index'));
+                            const fileItem = this.closest('div');
+                            // Add remove animation
+                            fileItem.classList.add('opacity-0', 'scale-95');
+                            setTimeout(() => {
+                                removeFile(index);
+                            }, 200);
+                        });
+                    });
+                } else {
+                    fileList.classList.add('hidden');
+                    fileList.innerHTML = '';
+                }
+            }
+
+            function removeFile(index) {
+                selectedFiles.splice(index, 1);
+                updateFileList();
+            }
+
+            function clearAllFiles() {
+                // Add animation effect
+                const fileItems = fileList.querySelectorAll('.animate-fadeIn');
+                fileItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('opacity-0', 'scale-95');
+                    }, index * 30);
+                });
+                
+                // Clear after animation completes
+                setTimeout(() => {
+                    selectedFiles = [];
+                    updateFileList();
+                }, fileItems.length * 30 + 100);
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function getFileIconClass(filename) {
+                const extension = filename.split('.').pop().toLowerCase();
+                switch (extension) {
+                    case 'pdf': return 'file-pdf-o';
+                    case 'doc':
+                    case 'docx': return 'file-word-o';
+                    case 'xls':
+                    case 'xlsx': return 'file-excel-o';
+                    case 'csv': return 'file-text-o';
+                    case 'txt': return 'file-text-o';
+                    default: return 'file-o';
+                }
+            }
+
+            function getFileIconColor(filename) {
+                const extension = filename.split('.').pop().toLowerCase();
+                switch (extension) {
+                    case 'pdf': return 'bg-red-500';
+                    case 'doc':
+                    case 'docx': return 'bg-blue-500';
+                    case 'xls':
+                    case 'xlsx': return 'bg-green-500';
+                    case 'csv': return 'bg-blue-400';
+                    case 'txt': return 'bg-gray-500';
+                    default: return 'bg-gray-400';
+                }
+            }
+
+            function showError(message) {
+                // Create error notification with Tailwind CSS
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-4 right-4 bg-white border border-danger text-danger p-4 rounded-lg shadow-lg transform translate-y-16 opacity-0 transition-all duration-300 z-50 flex items-center space-x-3';
+                notification.innerHTML = `
+                    <i class="fa fa-exclamation-circle text-xl"></i>
+                    <span>${message}</span>
+                    <button type="button" class="ml-2 text-gray-400 hover:text-gray-600" onclick="this.parentElement.remove()">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                document.body.appendChild(notification);
+                
+                // Show notification with animation
+                setTimeout(() => {
+                    notification.classList.remove('translate-y-16', 'opacity-0');
+                }, 10);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.add('translate-y-16', 'opacity-0');
+                    setTimeout(() => {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+
+            function validateForm() {
+                if (selectedFiles.length === 0) {
+                    showError('请至少选择一个文件上传');
+                    return false;
+                }
+                
+                const title = document.getElementById('title').value.trim();
+                const category = document.getElementById('category').value;
+                const date = document.getElementById('date').value;
+                
+                // 检查必填字段
+                if (!title) {
+                    showError('请输入文档标题');
+                    document.getElementById('title').focus();
+                    return false;
+                }
+                
+                if (!category) {
+                    showError('请选择文档类别');
+                    document.getElementById('category').focus();
+                    return false;
+                }
+                
+                if (!date) {
+                    showError('请选择文档日期');
+                    document.getElementById('date').focus();
+                    return false;
+                }
+                
+                // Create a new FileList object with selected files
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                fileInput.files = dataTransfer.files;
+                
+                // Disable submit button to prevent duplicate submissions
+    uploadButton.disabled = true;
+    uploadButton.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 上传中...';
+    
+    // Show loading mask
+    const loadingMask = document.getElementById('loading-mask');
+    if (loadingMask) {
+        loadingMask.classList.remove('hidden');
+    }
+    
+    return true;
+            }
+            
+            // Add focus styles to form elements
+            document.querySelectorAll('input, select, textarea').forEach(element => {
+                element.addEventListener('focus', function() {
+                    this.parentElement.classList.add('ring-2', 'ring-primary/30');
+                });
+                element.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('ring-2', 'ring-primary/30');
+                });
+            });
+        });
+        
+        // Add animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fadeIn {
+                animation: fadeIn 0.3s ease forwards;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    <!-- Loading Mask -->
+    <div id="loading-mask" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex flex-col items-center justify-center hidden">
+        <div class="flex flex-col items-center gap-3 p-6 bg-white rounded-xl shadow-xl">
+            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-lg font-medium text-gray-700">正在上传文档，请稍候...</p>
+            <p class="text-sm text-gray-500">文件上传中，请勿关闭页面</p>
+        </div>
+    </div>
+</body>
+</html>

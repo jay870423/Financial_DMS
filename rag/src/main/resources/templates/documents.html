@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档管理 - 财务文档管理系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF', // 深蓝作为主色调，传达专业性和信任感
+                        secondary: '#3B82F6', // 中蓝作为次要色调
+                        accent: '#2563EB', // 强调色
+                        success: '#10B981', // 成功色
+                        warning: '#F59E0B', // 警告色
+                        danger: '#EF4444', // 危险/错误色
+                        neutral: {
+                            100: '#F3F4F6',
+                            200: '#E5E7EB',
+                            300: '#D1D5DB',
+                            400: '#9CA3AF',
+                            500: '#6B7280',
+                            600: '#4B5563',
+                            700: '#374151',
+                            800: '#1F2937',
+                            900: '#111827'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+                        'card-hover': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                        'button': '0 2px 4px rgba(30, 64, 175, 0.2)'
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .hover-scale {
+                @apply hover:scale-105 transition-transform duration-200;
+            }
+            .hover-lift {
+                @apply hover:-translate-y-1 transition-transform duration-200;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-button hover:bg-primary/90 focus:ring-2 focus:ring-primary/50 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-secondary {
+                @apply bg-white text-neutral-700 border border-gray-300 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-icon {
+                @apply p-2 rounded-full transition-all duration-200 focus:ring-2 focus:outline-none;
+            }
+            .btn-icon-primary {
+                @apply bg-primary/10 text-primary hover:bg-primary/20 focus:ring-primary/50;
+            }
+            .btn-icon-success {
+                @apply bg-success/10 text-success hover:bg-success/20 focus:ring-success/50;
+            }
+            .btn-icon-warning {
+                @apply bg-warning/10 text-warning hover:bg-warning/20 focus:ring-warning/50;
+            }
+            .btn-icon-danger {
+                @apply bg-danger/10 text-danger hover:bg-danger/20 focus:ring-danger/50;
+            }
+            .form-input {
+                @apply w-full py-2 pr-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors duration-150;
+            }
+            
+            /* 图标垂直对齐调整 */
+            .relative i,
+            .relative svg {
+                font-size: 0.875rem;
+            }
+            /* 强制设置搜索和筛选框的左内边距 */
+            #search-input,
+            #category-filter {
+                padding-left: 56px !important;
+                vertical-align: middle;
+            }
+            
+            .sidebar-link {
+                @apply flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200;
+            }
+            .sidebar-link-active {
+                @apply bg-primary/10 text-primary font-medium;
+            }
+            .sidebar-link-inactive {
+                @apply text-neutral-600 hover:bg-gray-100;
+            }
+            .animate-fade-in {
+                animation: fadeIn 0.4s ease-out;
+            }
+            .animate-slide-up {
+                animation: slideUp 0.3s ease-out;
+            }
+            .tag {
+                @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer;
+            }
+            .table-header-cell {
+                @apply px-6 py-3 text-left text-sm font-medium text-neutral-500 uppercase tracking-wider;
+            }
+            .table-cell {
+                @apply px-6 py-4 whitespace-nowrap text-sm text-neutral-700;
+            }
+            .skeleton {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: loading 1.5s infinite;
+            }
+        }
+    </style>
+    <style>
+        /* 全局动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-neutral-800 min-h-screen flex flex-col">
+    <!-- 布局容器 -->
+    <div class="flex min-h-screen bg-gray-50">
+        <!-- 左侧导航栏 -->
+        <aside class="bg-white shadow-sm w-64 flex-shrink-0 hidden md:block transition-all duration-300 ease-in-out z-30">
+            <div class="p-4 border-b border-gray-200">
+                <a href="/" class="flex items-center space-x-3 text-primary group">
+                    <i class="fa fa-file-text-o text-2xl group-hover:scale-110 transition-transform duration-200"></i>
+                    <span class="font-bold text-lg group-hover:text-secondary transition-colors duration-200">财务文档管理系统</span>
+                </a>
+            </div>
+            <nav class="p-4">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-3">主导航</div>
+                <div class="space-y-1">
+                    <a href="/dashboard" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-dashboard mr-3 text-gray-500"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="/documents" class="sidebar-link sidebar-link-active">
+                        <i class="fa fa-folder-open mr-3"></i>
+                        <span>文档管理</span>
+                    </a>
+                    <a href="/tables" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-table mr-3 text-gray-500"></i>
+                        <span>义表管理</span>
+                    </a>
+                </div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-8 mb-4 px-3">系统设置</div>
+                <div class="space-y-1">
+                    <a href="/users" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-users mr-3 text-gray-500"></i>
+                        <span>用户管理</span>
+                    </a>
+                    <a href="/settings" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-cog mr-3 text-gray-500"></i>
+                        <span>系统设置</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区域 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部导航栏 -->
+            <header class="bg-white shadow-sm sticky top-0 z-20 transition-all duration-300">
+                <div class="max-w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <button id="mobile-menu-button" class="p-2 rounded-md text-gray-500 focus:outline-none md:hidden hover:bg-gray-100 transition-colors duration-200">
+                            <i class="fa fa-bars text-lg"></i>
+                        </button>
+                        <h1 class="ml-4 text-xl font-semibold text-gray-900 hidden md:block">文档管理</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="btn-icon relative hover:bg-gray-100 text-gray-500">
+                            <i class="fa fa-bell text-lg"></i>
+                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 focus:outline-none group-hover:opacity-90 transition-opacity duration-200">
+                                <img src="/images/avatar-placeholder.png" alt="用户头像" class="w-9 h-9 rounded-full border-2 border-primary/20 object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/36/1E40AF/FFFFFF?text=用户';">
+                                <span class="text-sm font-medium text-gray-700 hidden sm:inline">管理员</span>
+                                <i class="fa fa-angle-down text-gray-500 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 transform origin-top-right scale-95 opacity-0 invisible group-hover:scale-100 group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150">
+                                    <i class="fa fa-user-o mr-2"></i>个人信息
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150">
+                                    <i class="fa fa-cog mr-2"></i>系统设置
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors duration-150">
+                                    <i class="fa fa-sign-out mr-2"></i>退出登录
+                                </a>
+                            </div>
+                              </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 主要内容 -->
+            <main class="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+                <!-- 面包屑导航 -->
+                <div class="mb-6">
+                    <nav class="flex" aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                            <li class="inline-flex items-center">
+                                <a href="/" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">
+                                    <i class="fa fa-home mr-1"></i>首页
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <i class="fa fa-angle-right text-gray-400 mx-1"></i>
+                                    <span class="text-sm font-medium text-primary">文档管理</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                
+                <!-- 页面头部 -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                    <div class="animate-slide-up">
+                        <h1 class="text-2xl font-bold text-gray-900">文档管理</h1>
+                        <p class="mt-1 text-sm text-gray-500">管理您的财务文档、报表和凭证</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3 animate-slide-up" style="animation-delay: 0.1s">
+                        <button id="batch-actions" class="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                            <i class="fa fa-cogs"></i>
+                            <span>批量操作</span>
+                        </button>
+                        <a href="/documents/upload" class="btn-primary flex items-center gap-2 hover-lift">
+                            <i class="fa fa-upload"></i>
+                            <span>上传新文档</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 搜索和筛选区域 -->
+                <div class="bg-white rounded-xl shadow-card p-5 sm:p-6 mb-6 animate-fade-in">
+                    <form id="search-form" action="/documents" method="get">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+                            <!-- 搜索框 -->
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" id="search-input" name="keyword" placeholder="搜索文档标题、内容或标签" 
+               class="form-input !pl-14" th:value="${searchKeyword}">
+                            </div>
+                            
+                            <!-- 类别筛选 -->
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-folder-o text-gray-400"></i>
+                                </div>
+                                <select id="category-filter" name="category" class="form-input !pl-14 pr-10 appearance-none" th:value="${activeCategory}">
+                                    <option value="">全部类别</option>
+                                    <option value="invoice">发票</option>
+                                    <option value="contract">合同</option>
+                                    <option value="report">报表</option>
+                                    <option value="receipt">收据</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <i class="fa fa-angle-down text-gray-400"></i>
+                                </div>
+                </div>
+                            
+                            <!-- 日期范围筛选 -->
+                            <div class="flex space-x-2">
+                                <div class="relative flex-1">
+                                    <input type="date" id="date-from" name="startDate" class="form-input" th:value="${startDate}">
+                                </div>
+                                <div class="flex items-center text-gray-500 whitespace-nowrap px-1">至</div>
+                                <div class="relative flex-1">
+                                    <input type="date" id="date-to" name="endDate" class="form-input" th:value="${endDate}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 排序选项和搜索按钮 -->
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 pt-2">
+                            <div class="flex items-center space-x-4">
+                                <div class="relative">
+                                    <div id="sort-dropdown" class="relative">
+                                        <button type="button" id="sort-button" class="form-input pr-10 appearance-none flex items-center justify-between w-full text-left">
+                                            <span th:text="${sortOrder eq 'newest' ? '最近修改(降序)' : sortOrder eq 'oldest' ? '最近修改(升序)' : sortOrder eq 'nameAsc' ? '名称(升序)' : '名称(降序)'}">最近修改(降序)</span>
+                                            <i class="fa fa-angle-down text-gray-400"></i>
+                                        </button>
+                                        <div id="sort-options" class="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-10 hidden">
+                                            <div class="py-1">
+                                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 sort-option" data-value="newest">最近修改(降序)</a>
+                                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 sort-option" data-value="oldest">最近修改(升序)</a>
+                                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 sort-option" data-value="nameAsc">名称(升序)</a>
+                                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 sort-option" data-value="nameDesc">名称(降序)</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="sort-order" name="sort" th:value="${sortOrder}">
+                                </div>
+                            </div>
+                            <button type="submit" id="search-button" class="btn-primary flex items-center gap-2 hover-lift w-full sm:w-auto justify-center">
+                                <i class="fa fa-search"></i>
+                                <span>搜索</span>
+                            </button>
+                        </div>
+                        
+                        <!-- 隐藏的分页参数 -->
+                        <input type="hidden" name="page" value="1">
+                    </form>
+                </div>
+                
+                <script>
+                // 排序功能的JavaScript代码已移至文件底部
+                </script>
+                <!-- 文档列表 -->
+                <div class="bg-white rounded-xl shadow-card overflow-hidden animate-fade-in" style="animation-delay: 0.2s">
+                    <div class="overflow-x-auto">
+                        <table id="documents-table" class="min-w-full divide-y divide-gray-200 document-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="table-header-cell w-12 relative">
+                                        <div class="flex items-center h-5">
+                                            <input id="select-all" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded transition-colors duration-150">
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="table-header-cell">
+                                        文档信息
+                                    </th>
+                                    <th scope="col" class="table-header-cell">
+                                        类别
+                                    </th>
+                                    <th scope="col" class="table-header-cell">
+                                        标签
+                                    </th>
+                                    <th scope="col" class="table-header-cell hidden md:table-cell">
+                                        文件大小
+                                    </th>
+                                    <th scope="col" class="table-header-cell hidden sm:table-cell">
+                                        上传日期
+                                    </th>
+                                    <th scope="col" class="table-header-cell hidden lg:table-cell">
+                                        最后修改
+                                    </th>
+                                    <th scope="col" class="table-header-cell text-right">
+                                        操作
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+
+                                <!-- 文档列表数据 -->
+                                <tr th:each="document : ${documents}" class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap table-cell">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" class="document-checkbox h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded transition-colors duration-150" th:attr="data-id=${document.id}, value=${document.id}">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap table-cell">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg" 
+                                                 th:classappend="${document.fileName != null ? (
+                                                     #strings.containsIgnoreCase(document.fileName, '.pdf') ? 'bg-red-50 text-red-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.doc') || #strings.containsIgnoreCase(document.fileName, '.docx') ? 'bg-blue-50 text-blue-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.xls') || #strings.containsIgnoreCase(document.fileName, '.xlsx') ? 'bg-green-50 text-green-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.txt') ? 'bg-gray-50 text-gray-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.jpg') || #strings.containsIgnoreCase(document.fileName, '.jpeg') || #strings.containsIgnoreCase(document.fileName, '.png') ? 'bg-purple-50 text-purple-500' :
+                                                     'bg-blue-50 text-primary'
+                                                 ) : 'bg-blue-50 text-primary'}">
+                                                <i th:class="${document.fileName != null ? (
+                                                     #strings.containsIgnoreCase(document.fileName, '.pdf') ? 'fa fa-file-pdf-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.doc') || #strings.containsIgnoreCase(document.fileName, '.docx') ? 'fa fa-file-word-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.xls') || #strings.containsIgnoreCase(document.fileName, '.xlsx') ? 'fa fa-file-excel-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.txt') ? 'fa fa-file-text-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.jpg') || #strings.containsIgnoreCase(document.fileName, '.jpeg') || #strings.containsIgnoreCase(document.fileName, '.png') ? 'fa fa-file-image-o text-xl' :
+                                                     'fa fa-file-o text-xl'
+                                                 ) : 'fa fa-file-o text-xl'}"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <h3 class="text-sm font-medium text-gray-900 truncate" th:text="${document.title}">文档标题</h3>
+                                                <p class="text-xs text-gray-500 truncate" th:text="${document.fileName}">文件名.pdf</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap table-cell">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" th:text="${document.category}">类别</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap table-cell">
+                                        <div class="flex flex-wrap gap-1">
+                                            <!-- 条件显示实际标签数据 -->
+                                            <th:block th:if="${document.tags != null and not #strings.isEmpty(document.tags)}">
+                                                <!-- 如果标签包含逗号，则分割显示多个标签 -->
+                                                <th:block th:if="${document.tags.contains(',')}">
+                                                    <span th:each="tag : ${#strings.split(document.tags, ',')}" 
+                                                          th:text="${#strings.trim(tag)}" 
+                                                          class="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium"></span>
+                                                </th:block>
+                                                <!-- 否则显示单个标签 -->
+                                                <span th:unless="${document.tags.contains(',')}" 
+                                                      th:text="${document.tags}" 
+                                                      class="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium"></span>
+                                            </th:block>
+                                            <!-- 如果没有标签，显示默认文本 -->
+                                            <span th:unless="${document.tags != null and not #strings.isEmpty(document.tags)}" 
+                                                  class="text-gray-400 text-xs">无标签</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell table-cell">
+                                        <div class="text-sm text-gray-500"
+                                             th:text="${document.fileSize != null && document.fileSize > 0 ? (
+                                                 document.fileSize < 1024 ? (document.fileSize + ' B') :
+                                                 document.fileSize < 1048576 ? (#numbers.formatDecimal(document.fileSize / 1024, 1, 2) + ' KB') :
+                                                 (#numbers.formatDecimal(document.fileSize / 1048576, 1, 2) + ' MB')
+                                             ) : '未知'}">
+                                            1.5 MB
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell table-cell">
+                                        <div class="text-sm text-gray-500" th:text="${#temporals.format(document.createdAt, 'yyyy-MM-dd HH:mm')}">2023-06-15</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell table-cell">
+                                        <div class="text-sm text-gray-500" th:text="${#temporals.format(document.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-06-20</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium table-cell">
+                                        <div class="flex items-center justify-end space-x-2">
+                                            <a th:href="@{/documents/view/{id}(id=${document.id})}" class="btn-icon btn-icon-primary" title="查看">
+                                                <i class="fa fa-eye"></i>
+                                                <span class="sr-only">查看</span>
+                                            </a>
+                                            <a th:href="@{/documents/{id}/edit(id=${document.id})}" class="btn-icon btn-icon-warning" title="编辑">
+                                                <i class="fa fa-pencil"></i>
+                                                <span class="sr-only">编辑</span>
+                                            </a>
+                                            <a th:href="@{/documents/download/{id}(id=${document.id})}" class="btn-icon btn-icon-success" title="下载">
+                                                <i class="fa fa-download"></i>
+                                                <span class="sr-only">下载</span>
+                                            </a>
+                                            <form th:action="@{/documents/{id}/delete(id=${document.id})}" method="post" style="display: inline;">
+                                                <button type="submit" class="btn-icon btn-icon-danger" title="删除" onclick="return confirm('确定要删除该文档吗？此操作不可撤销。');">
+                                                    <i class="fa fa-trash"></i>
+                                                    <span class="sr-only">删除</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- 空状态 -->
+                                <tr th:if="${documents.isEmpty()}">
+                                    <td colspan="8" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <div class="h-20 w-20 text-gray-300 mb-4 flex items-center justify-center">
+                                                <i class="fa fa-folder-open-o text-5xl"></i>
+                                            </div>
+                                            <h3 class="text-lg font-medium text-gray-900 mb-1">暂无文档</h3>
+                                            <p class="text-sm text-gray-500 mb-6 max-w-md text-center">点击"上传新文档"按钮开始添加您的第一个文档</p>
+                                            <a href="/documents/upload" class="btn-primary flex items-center gap-2 hover-lift">
+                                                <i class="fa fa-upload"></i>
+                                                上传文档
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页容器 -->
+                    <div id="pagination-container" class="mt-4"></div>
+
+                </div>
+            </main>
+            
+            <!-- 页脚 -->
+            <footer class="bg-white border-t border-gray-200 py-4 px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-3 md:mb-0">
+                        <p class="text-sm text-gray-500">© 2024 财务文档管理系统 - 版权所有</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="/about" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">关于我们</a>
+                        <a href="/help" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">帮助中心</a>
+                        <a href="/contact" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">联系我们</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- 移动端侧边栏 -->
+    <div id="mobile-sidebar" class="fixed inset-0 z-50 bg-black bg-opacity-50 transform transition-transform duration-300 translate-x-full">
+        <div class="bg-white h-full w-64 flex-shrink-0 shadow-xl transform transition-transform duration-300 translate-x-full" id="mobile-sidebar-content">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3 text-primary">
+                    <i class="fa fa-file-text-o text-xl"></i>
+                    <span class="font-bold text-lg">财务文档管理系统</span>
+                </div>
+                <button id="close-mobile-menu" class="p-2 rounded-md text-gray-500 focus:outline-none hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fa fa-times text-lg"></i>
+                </button>
+            </div>
+            <!-- 移动端导航菜单 -->
+            <nav class="p-4">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-3">主导航</div>
+                <div class="space-y-1">
+                    <a href="/dashboard" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-dashboard mr-3 text-gray-500"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="/documents" class="sidebar-link sidebar-link-active">
+                        <i class="fa fa-folder-open mr-3"></i>
+                        <span>文档管理</span>
+                    </a>
+                    <a href="/tables" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-table mr-3 text-gray-500"></i>
+                        <span>义表管理</span>
+                    </a>
+                </div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-8 mb-4 px-3">系统设置</div>
+                <div class="space-y-1">
+                    <a href="/users" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-users mr-3 text-gray-500"></i>
+                        <span>用户管理</span>
+                    </a>
+                    <a href="/settings" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-cog mr-3 text-gray-500"></i>
+                        <span>系统设置</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // 创建加载遮罩层
+        function createLoadingOverlay() {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            overlay.id = 'loading-overlay';
+            
+            const spinner = document.createElement('div');
+            spinner.className = 'bg-white p-6 rounded-lg shadow-xl flex flex-col items-center';
+            spinner.innerHTML = `
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                <p class="text-gray-700 font-medium">加载中...</p>
+            `;
+            
+            overlay.appendChild(spinner);
+            return overlay;
+        }
+        
+        // 显示加载遮罩层
+        function showLoading() {
+            let overlay = document.getElementById('loading-overlay');
+            if (!overlay) {
+                overlay = createLoadingOverlay();
+                document.body.appendChild(overlay);
+            }
+            overlay.style.display = 'flex';
+        }
+        
+        // 隐藏加载遮罩层
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+        // 复选框功能
+        const selectAllCheckbox = document.getElementById('select-all');
+        const documentCheckboxes = document.querySelectorAll('.document-checkbox');
+        const batchActionsButton = document.getElementById('batch-actions');
+        
+        // 全选/取消全选
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                documentCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBatchActionsButton();
+            });
+        }
+        
+        // 单个复选框变化时更新批量操作按钮状态
+        documentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBatchActionsButton);
+        });
+        
+        // 更新批量操作按钮状态
+        function updateBatchActionsButton() {
+            const checkedCount = document.querySelectorAll('.document-checkbox:checked').length;
+            if (checkedCount > 0) {
+                batchActionsButton.classList.remove('disabled');
+                batchActionsButton.classList.add('bg-primary/10', 'text-primary', 'border-primary/30');
+                batchActionsButton.classList.remove('bg-white', 'text-neutral-700', 'border-gray-300');
+                batchActionsButton.setAttribute('data-count', checkedCount);
+            } else {
+                batchActionsButton.classList.add('disabled');
+                batchActionsButton.classList.remove('bg-primary/10', 'text-primary', 'border-primary/30');
+                batchActionsButton.classList.add('bg-white', 'text-neutral-700', 'border-gray-300');
+                batchActionsButton.removeAttribute('data-count');
+            }
+        }
+        
+        // 搜索功能和防抖处理
+        const searchButton = document.getElementById('search-button');
+        const searchInput = document.getElementById('search-input');
+        const searchForm = document.getElementById('search-form');
+        const categoryFilter = document.getElementById('category-filter');
+        const sortOrder = document.getElementById('sort-order');
+        const dateFrom = document.getElementById('date-from');
+        const dateTo = document.getElementById('date-to');
+        
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+        
+        // 加载文档列表
+        function loadDocuments(page = 1) {
+            showLoading();
+            
+            // 构建查询参数
+            const params = new URLSearchParams();
+            params.append('page', page);
+            params.append('size', 10);
+            
+            // 添加搜索和筛选条件
+            if (searchInput && searchInput.value.trim()) {
+                params.append('keyword', searchInput.value.trim());
+            }
+            
+            if (categoryFilter && categoryFilter.value) {
+                params.append('category', categoryFilter.value);
+            }
+            
+            if (sortOrder && sortOrder.value) {
+                params.append('sort', sortOrder.value);
+            }
+            
+            if (dateFrom && dateFrom.value) {
+                params.append('dateFrom', dateFrom.value);
+            }
+            
+            if (dateTo && dateTo.value) {
+                params.append('dateTo', dateTo.value);
+            }
+            
+            // 发送AJAX请求
+            fetch(`/documents/data?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络请求失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 更新文档列表
+                updateDocumentsList(data);
+                // 更新分页
+                updatePagination(data.totalPages, page, data.totalElements);
+                })
+                .catch(error => {
+                    console.error('加载文档失败:', error);
+                    alert('加载文档失败，请稍后重试');
+                })
+                .finally(() => {
+                    hideLoading();
+                    
+                    // 重置搜索按钮状态
+                    if (searchButton) {
+                        searchButton.disabled = false;
+                        searchButton.innerHTML = '<i class="fa fa-search"></i> <span>搜索</span>';
+                    }
+                });
+        }
+        
+        // 更新文档列表
+        function updateDocumentsList(data) {
+            const tableBody = document.querySelector('#documents-table tbody');
+            if (!tableBody) return;
+            
+            // 清空表格内容
+            tableBody.innerHTML = '';
+            
+            if (data.content && data.content.length > 0) {
+                // 添加文档行
+                    data.content.forEach(doc => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors';
+                        
+                        // 格式化文件大小
+                        let fileSizeText = '未知';
+                        if (doc.fileSize && doc.fileSize > 0) {
+                            if (doc.fileSize < 1024) {
+                                fileSizeText = `${doc.fileSize} B`;
+                            } else if (doc.fileSize < 1048576) {
+                                fileSizeText = `${(doc.fileSize / 1024).toFixed(2)} KB`;
+                            } else {
+                                fileSizeText = `${(doc.fileSize / 1048576).toFixed(2)} MB`;
+                            }
+                        }
+                        
+                        // 格式化日期
+                        const createdAt = new Date(doc.createdAt).toLocaleString('zh-CN');
+                        const updatedAt = new Date(doc.updatedAt).toLocaleString('zh-CN');
+                        
+                        // 处理标签显示
+                        let tagsHtml = '<div class="flex flex-wrap gap-1">';
+                        if (doc.tags && doc.tags.trim()) {
+                            if (doc.tags.includes(',')) {
+                                const tags = doc.tags.split(',').map(tag => tag.trim());
+                                tags.forEach(tag => {
+                                    tagsHtml += `<span class="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium">${tag}</span>`;
+                                });
+                            } else {
+                                tagsHtml += `<span class="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium">${doc.tags.trim()}</span>`;
+                            }
+                        } else {
+                            tagsHtml += '<span class="text-gray-400 text-xs">无标签</span>';
+                        }
+                        tagsHtml += '</div>';
+                        
+                        // 生成文件图标和背景色
+                        let iconClass = 'fa fa-file-o text-xl';
+                        let bgClass = 'bg-blue-50 text-primary';
+                        if (doc.fileName) {
+                            const lowerFileName = doc.fileName.toLowerCase();
+                            if (lowerFileName.endsWith('.pdf')) {
+                                iconClass = 'fa fa-file-pdf-o text-xl';
+                                bgClass = 'bg-red-50 text-red-500';
+                            } else if (lowerFileName.endsWith('.doc') || lowerFileName.endsWith('.docx')) {
+                                iconClass = 'fa fa-file-word-o text-xl';
+                                bgClass = 'bg-blue-50 text-blue-500';
+                            } else if (lowerFileName.endsWith('.xls') || lowerFileName.endsWith('.xlsx')) {
+                                iconClass = 'fa fa-file-excel-o text-xl';
+                                bgClass = 'bg-green-50 text-green-500';
+                            } else if (lowerFileName.endsWith('.txt')) {
+                                iconClass = 'fa fa-file-text-o text-xl';
+                                bgClass = 'bg-gray-50 text-gray-500';
+                            } else if (lowerFileName.endsWith('.jpg') || lowerFileName.endsWith('.jpeg') || lowerFileName.endsWith('.png')) {
+                                iconClass = 'fa fa-file-image-o text-xl';
+                                bgClass = 'bg-purple-50 text-purple-500';
+                            }
+                        }
+                        
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="document-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary" value="${doc.id}">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center ${bgClass} rounded-lg">
+                                        <i class="${iconClass}"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">${doc.title || '未命名文档'}</div>
+                                        <div class="text-xs text-gray-500 truncate max-w-xs">${doc.fileName || ''}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${doc.category || '未分类'}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap table-cell">
+                                ${tagsHtml}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                                <div class="text-sm text-gray-900">${fileSizeText}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                                <div class="text-sm text-gray-900">${createdAt}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                                <div class="text-sm text-gray-900">${updatedAt}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <a href="/documents/view/${doc.id}" class="btn-icon btn-icon-primary" title="预览">
+                                        <i class="fa fa-eye"></i>
+                                        <span class="sr-only">预览</span>
+                                    </a>
+                                    <a href="/documents/${doc.id}/edit" class="btn-icon btn-icon-warning" title="编辑">
+                                        <i class="fa fa-pencil"></i>
+                                        <span class="sr-only">编辑</span>
+                                    </a>
+                                    <a href="/documents/download/${doc.id}" class="btn-icon btn-icon-success" title="下载">
+                                        <i class="fa fa-download"></i>
+                                        <span class="sr-only">下载</span>
+                                    </a>
+                                    <form action="/documents/${doc.id}/delete" method="post" style="display: inline;">
+                                        <button type="submit" class="btn-icon btn-icon-danger" title="删除" onclick="return confirm('确定要删除该文档吗？此操作不可撤销。');">
+                                            <i class="fa fa-trash"></i>
+                                            <span class="sr-only">删除</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        `;
+                    
+                    tableBody.appendChild(row);
+                });
+            } else {
+                // 空状态
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `
+                    <td colspan="8" class="px-6 py-12 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="h-20 w-20 text-gray-300 mb-4 flex items-center justify-center">
+                                <i class="fa fa-folder-open-o text-5xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-1">暂无文档</h3>
+                            <p class="text-sm text-gray-500 mb-6 max-w-md text-center">点击"上传新文档"按钮开始添加您的第一个文档</p>
+                            <a href="/documents/upload" class="btn-primary flex items-center gap-2 hover-lift">
+                                <i class="fa fa-upload"></i>
+                                上传文档
+                            </a>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(emptyRow);
+            }
+            
+            // 重新绑定复选框事件
+            bindCheckboxEvents();
+        }
+        
+        // 更新分页
+        function updatePagination(totalPages, currentPage, totalElements) {
+            const paginationContainer = document.querySelector('#pagination-container');
+            if (!paginationContainer) return;
+            
+            // 如果没有文档，隐藏分页控件
+            if (totalElements === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            // 创建新的分页导航
+            const newPaginationNav = document.createElement('nav');
+            newPaginationNav.className = 'flex justify-between items-center px-4 py-3 sm:px-6';
+            newPaginationNav.id = 'pagination-nav';
+            
+            // 分页信息
+            const paginationInfo = document.createElement('div');
+            paginationInfo.className = 'hidden sm:flex-1 sm:flex sm:items-center sm:justify-between';
+            paginationInfo.innerHTML = `
+                <div>
+                    <p class="text-sm text-gray-700">
+                        显示第 <span class="font-medium">${(currentPage - 1) * 10 + 1}</span> 到 
+                        <span class="font-medium">${Math.min(currentPage * 10, totalElements)}</span> 条，共 
+                        <span class="font-medium">${totalElements}</span> 条结果
+                    </p>
+                </div>
+            `;
+            
+            // 分页按钮
+            const paginationButtons = document.createElement('div');
+            paginationButtons.className = 'flex-1 flex justify-between sm:justify-end';
+            
+            // 上一页按钮
+            const prevButton = document.createElement('button');
+            prevButton.className = `relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`;
+            prevButton.innerHTML = '<i class="fa fa-chevron-left mr-1"></i> 上一页';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    loadDocuments(currentPage - 1);
+                }
+            });
+            
+            // 下一页按钮
+            const nextButton = document.createElement('button');
+            nextButton.className = `relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 ml-3 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}`;
+            nextButton.innerHTML = '下一页 <i class="fa fa-chevron-right ml-1"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    loadDocuments(currentPage + 1);
+                }
+            });
+            
+            paginationButtons.appendChild(prevButton);
+            paginationButtons.appendChild(nextButton);
+            paginationInfo.appendChild(paginationButtons);
+            newPaginationNav.appendChild(paginationInfo);
+            
+            // 替换现有的分页导航
+            const paginationNav = document.querySelector('#pagination-nav');
+            if (paginationNav && paginationNav.parentNode) {
+                paginationNav.parentNode.replaceChild(newPaginationNav, paginationNav);
+            } else {
+                paginationContainer.appendChild(newPaginationNav);
+            }
+        }
+        
+        // 重新绑定复选框事件
+        function bindCheckboxEvents() {
+            const documentCheckboxes = document.querySelectorAll('.document-checkbox');
+            documentCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateBatchActionsButton);
+            });
+            updateBatchActionsButton();
+        }
+        
+        // 防抖搜索提交
+        const debouncedSubmit = debounce(function() {
+            loadDocuments(1); // 搜索时从第一页开始
+        }, 300);
+        
+        // 搜索按钮点击事件
+        if (searchButton) {
+            searchButton.addEventListener('click', function() {
+                this.disabled = true;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>搜索中...</span>';
+                debouncedSubmit();
+            });
+        }
+        
+        // 搜索框输入事件 - 增加防抖
+        if (searchInput) {
+            searchInput.addEventListener('input', debouncedSubmit);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    debouncedSubmit();
+                }
+            });
+        }
+        
+        // 类别变化自动提交
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
+                loadDocuments(1);
+            });
+        }
+        
+        // 排序下拉菜单功能
+        const sortDropdown = document.getElementById('sort-dropdown');
+        const sortButton = document.getElementById('sort-button');
+        const sortOptions = document.getElementById('sort-options');
+        const sortOrderInputs = document.querySelectorAll('.sort-option');
+        
+        if (sortButton && sortOptions) {
+            // 切换下拉菜单显示状态
+            sortButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sortOptions.classList.toggle('hidden');
+            });
+            
+            // 点击排序选项
+            sortOrderInputs.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // 更新隐藏字段的值
+                    const sortValue = this.getAttribute('data-value');
+                    const sortOrder = document.getElementById('sort-order');
+                    if (sortOrder) {
+                        sortOrder.value = sortValue;
+                    }
+                    
+                    // 更新按钮文本
+                    sortButton.querySelector('span').textContent = this.textContent;
+                    
+                    // 关闭下拉菜单
+                    sortOptions.classList.add('hidden');
+                    
+                    // 局部刷新
+                    loadDocuments(1);
+                });
+            });
+            
+            // 点击页面其他地方关闭下拉菜单
+            document.addEventListener('click', function() {
+                if (!sortOptions.classList.contains('hidden')) {
+                    sortOptions.classList.add('hidden');
+                }
+            });
+            
+            // 阻止下拉菜单内部点击事件冒泡
+            sortOptions.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        // 日期变化自动提交
+        if (dateFrom) {
+            dateFrom.addEventListener('change', function() {
+                loadDocuments(1);
+            });
+        }
+        
+        if (dateTo) {
+            dateTo.addEventListener('change', function() {
+                loadDocuments(1);
+            });
+        }
+        
+        // 分页切换函数 - 供外部调用
+        window.loadDocumentsPage = function(page) {
+            loadDocuments(page);
+        };
+        
+        // 注释掉自动加载，避免与Thymeleaf渲染冲突
+        // loadDocuments(1);
+        
+        // 保留loadDocuments函数但不自动执行，只在需要时手动调用
+        
+        // 响应式设计 - 侧边栏切换
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenuButton = document.getElementById('close-mobile-menu');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileSidebarContent = document.getElementById('mobile-sidebar-content');
+        
+        if (mobileMenuButton && closeMobileMenuButton && mobileSidebar && mobileSidebarContent) {
+            mobileMenuButton.addEventListener('click', function() {
+                mobileSidebar.classList.remove('translate-x-full');
+                setTimeout(() => {
+                    mobileSidebarContent.classList.remove('translate-x-full');
+                }, 10);
+                document.body.classList.add('overflow-hidden');
+            });
+            
+            closeMobileMenuButton.addEventListener('click', function() {
+                mobileSidebarContent.classList.add('translate-x-full');
+                setTimeout(() => {
+                    mobileSidebar.classList.add('translate-x-full');
+                }, 300);
+                document.body.classList.remove('overflow-hidden');
+            });
+            
+            // 点击遮罩层关闭侧边栏
+            mobileSidebar.addEventListener('click', function(e) {
+                if (e.target === mobileSidebar) {
+                    closeMobileMenuButton.click();
+                }
+            });
+        }
+        
+        function handleResize() {
+            const sidebar = document.querySelector('aside');
+            
+            // 在大屏模式下关闭移动侧边栏
+            if (window.innerWidth > 768 && mobileSidebar && !mobileSidebar.classList.contains('translate-x-full')) {
+                closeMobileMenuButton.click();
+            }
+        }
+        
+        // 初始化时执行一次
+        handleResize();
+        // 监听窗口大小变化
+        window.addEventListener('resize', handleResize);
+        
+        // 页面滚动效果 - 导航栏阴影变化
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-md');
+                header.classList.remove('shadow-sm');
+            } else {
+                header.classList.add('shadow-sm');
+                header.classList.remove('shadow-md');
+            }
+        });
+        
+        // 批量操作菜单
+        if (batchActionsButton) {
+            // 创建批量操作菜单
+            const batchMenu = document.createElement('div');
+            batchMenu.className = 'absolute z-50 mt-2 bg-white rounded-lg shadow-lg p-2 border border-gray-200';
+            batchMenu.style.display = 'none';
+            batchMenu.innerHTML = `
+                <button id="batch-rag-search" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary/10 hover:text-primary rounded-md transition-all">
+                    <i class="fa fa-search mr-2"></i> RAG搜索总结
+                </button>
+                <button id="batch-delete" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary/10 hover:text-primary rounded-md transition-all">
+                    <i class="fa fa-trash mr-2"></i> 批量删除
+                </button>
+            `;
+            
+            // 添加菜单到页面
+            document.body.appendChild(batchMenu);
+            
+            // 显示/隐藏菜单
+            batchActionsButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (this.hasAttribute('data-count')) {
+                    // 计算菜单位置
+                    const rect = this.getBoundingClientRect();
+                    batchMenu.style.left = `${rect.left}px`;
+                    batchMenu.style.top = `${rect.bottom}px`;
+                    batchMenu.style.display = batchMenu.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+            
+            // 点击菜单外关闭菜单
+            document.addEventListener('click', function(e) {
+                if (e.target !== batchActionsButton && e.target.closest('.absolute') !== batchMenu) {
+                    batchMenu.style.display = 'none';
+                }
+            });
+            
+            // RAG搜索总结功能
+            document.getElementById('batch-rag-search').addEventListener('click', function() {
+                const checkedCheckboxes = document.querySelectorAll('.document-checkbox:checked');
+                const documentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+                
+                if (documentIds.length > 0) {
+                    // 创建右侧抽屉
+                    const drawer = document.createElement('div');
+                    drawer.className = 'fixed right-0 top-0 bottom-0 w-[800px] max-w-[90vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-hidden';
+                    drawer.style.transform = 'translateX(0)';
+                    drawer.innerHTML = `
+                        <div class="flex flex-col h-full">
+                            <!-- 抽屉头部 -->
+                            <div class="border-b border-gray-200 bg-gradient-to-r from-primary/5 to-transparent p-5 flex items-center justify-between shadow-sm">
+                                <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                    <i class="fa fa-search text-primary"></i>
+                                    RAG搜索总结
+                                </h3>
+                                <button id="close-rag-drawer" class="text-gray-400 hover:text-gray-500 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-105">
+                                    <i class="fa fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- 抽屉内容区 -->
+                            <div class="flex-1 overflow-y-auto max-h-[calc(100vh-120px)] p-5 space-y-5">
+                                <!-- 用户问题 -->
+                                <div id="rag-question-section" class="mb-5">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label class="block text-sm font-medium text-gray-700">请输入您的问题：</label>
+                                        <span id="question-char-count" class="text-xs text-gray-400">0/500</span>
+                                    </div>
+                                    <textarea id="rag-question" class="w-full border border-gray-200 rounded-xl p-4 h-32 resize-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-sm transition-all duration-200 hover:border-gray-300" placeholder="例如：请总结这些文档的主要内容..." maxlength="500"></textarea>
+                                    <div class="mt-2 text-xs text-gray-500">
+                                        <i class="fa fa-lightbulb-o"></i> 提示：您可以问"这些文档的核心观点是什么？"或"请比较这些文档的差异"等问题
+                                    </div>
+                                </div>
+                                
+                                <!-- 控制按钮 -->
+                                <div id="rag-controls" class="flex gap-3 mb-5">
+                                    <button id="send-rag-request" class="btn-primary flex items-center gap-2 hover-lift flex-1 sm:flex-auto">
+                                        <i class="fa fa-send mr-2"></i> 发送请求
+                                    </button>
+                                    <button id="cancel-rag-request" class="btn-secondary flex items-center gap-2 hover-lift">
+                                        <i class="fa fa-times mr-2"></i> 取消
+                                    </button>
+                                </div>
+                                
+                                <!-- 结果区域 -->
+                                <div id="rag-results-section" class="hidden">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-semibold text-gray-800 text-lg flex items-center gap-2">
+                                            <i class="fa fa-file-text-o text-primary"></i>
+                                            总结内容
+                                        </h4>
+                                        <div class="flex gap-2">
+                                            <button id="optimize-question-btn" class="btn-icon-primary p-2 hover:bg-primary/20 transition-all duration-200 hover:scale-105" title="优化问题">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button id="copy-rag-result" class="btn-icon-primary p-2 hover:bg-primary/20 transition-all duration-200 hover:scale-105" title="复制结果">
+                                                <i class="fa fa-copy"></i>
+                                            </button>
+                                            <button id="download-rag-result" class="btn-icon-primary p-2 hover:bg-primary/20 transition-all duration-200 hover:scale-105" title="下载结果">
+                                                <i class="fa fa-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="rag-summary-content" class="bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl p-6 shadow-sm overflow-x-auto transition-all duration-300"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 创建遮罩层
+                    const overlay = document.createElement('div');
+                    overlay.className = 'fixed inset-0 bg-black/50 z-40 transition-opacity duration-300';
+                    
+                    // 添加到页面
+                    document.body.appendChild(overlay);
+                    document.body.appendChild(drawer);
+                    
+                    // 关闭抽屉
+                    const closeDrawer = () => {
+                        drawer.style.transform = 'translateX(100%)';
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            document.body.removeChild(drawer);
+                            document.body.removeChild(overlay);
+                        }, 300);
+                    };
+                    
+                    // 添加关闭事件监听
+                    overlay.addEventListener('click', closeDrawer);
+                    drawer.querySelector('#close-rag-drawer').addEventListener('click', closeDrawer);
+                    drawer.querySelector('#cancel-rag-request').addEventListener('click', closeDrawer);
+                    
+                    // 重新提问功能
+                    drawer.querySelector('#optimize-question-btn').addEventListener('click', () => {
+                        // 显示问题输入区域并隐藏结果区域
+                        const questionSection = drawer.querySelector('#rag-question-section');
+                        const controlsSection = drawer.querySelector('#rag-controls');
+                        const resultsSection = drawer.querySelector('#rag-results-section');
+                        const questionTextarea = drawer.querySelector('#rag-question');
+                        
+                        if (questionSection && controlsSection && resultsSection && questionTextarea) {
+                            questionSection.style.display = 'block';
+                            controlsSection.style.display = 'flex';
+                            resultsSection.style.display = 'none';
+                            questionTextarea.focus();
+                        }
+                    });
+                    
+                    // 问题输入框字符计数
+                    const questionTextarea = drawer.querySelector('#rag-question');
+                    const charCount = drawer.querySelector('#question-char-count');
+                    
+                    questionTextarea.addEventListener('input', () => {
+                        const length = questionTextarea.value.length;
+                        charCount.textContent = `${length}/500`;
+                        if (length > 500) {
+                            charCount.classList.add('text-red-500');
+                        } else {
+                            charCount.classList.remove('text-red-500');
+                            charCount.classList.add('text-gray-400');
+                        }
+                    });
+                    
+                    // 发送RAG请求
+                    document.getElementById('send-rag-request').addEventListener('click', () => {
+                        const question = document.getElementById('rag-question').value.trim();
+                        
+                        if (!question) {
+                            alert('请输入您的问题');
+                            return;
+                        }
+                        
+                        // 显示结果区域并隐藏输入区域
+                        document.getElementById('rag-question-section').style.display = 'none';
+                        document.getElementById('rag-controls').style.display = 'none';
+                        document.getElementById('rag-results-section').style.display = 'block';
+                        
+                        // 显示加载状态
+                        const summaryContentEl = drawer.querySelector('#rag-summary-content');
+                        summaryContentEl.innerHTML = '<div class="flex items-center gap-3 text-gray-500 py-4"><i class="fa fa-spinner fa-spin text-xl"></i><span>正在生成总结...</span></div>';
+                        
+                        // 发送请求到后端进行RAG搜索总结 (流式)
+                        fetch('/batch-summary/stream', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ documentIds: documentIds, query: question })
+                        })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败: ' + response.statusText);
+                        }
+                        
+                        // 获取总结内容元素
+                        const summaryContentEl = drawer.querySelector('#rag-summary-content');
+                        let fullSummary = '';
+                        
+                        // 处理流式响应
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+                        let buffer = '';
+                        
+                        // 清除加载状态
+                        summaryContentEl.innerHTML = '<div class="prose max-w-none text-gray-700"></div>';
+                        const proseDiv = summaryContentEl.querySelector('.prose'); // 获取prose容器
+                        
+                        function readChunk() {
+                            return reader.read().then(({ done, value }) => {
+                                if (done) {
+                                    // 处理剩余的缓冲数据
+                                    processBuffer();
+                                    return;
+                                }
+                                
+                                // 解码并处理数据
+                                buffer += decoder.decode(value, { stream: true });
+                                processBuffer();
+                                
+                                return readChunk();
+                            });
+                        }
+                        
+                        function processBuffer() {
+                            // 查找完整的事件
+                            const eventEndIndex = buffer.lastIndexOf('\n\n');
+                            if (eventEndIndex > -1) {
+                                const events = buffer.substring(0, eventEndIndex + 2).split('\n\n');
+                                buffer = buffer.substring(eventEndIndex + 2);
+                                
+                                events.forEach(event => {
+                                    if (event.trim().startsWith('data: ')) {
+                                        let content = event.trim().substring(6); // 去除 "data: " 前缀
+                                        if (content) {
+                                            // 处理内容格式：将换行转换为HTML段落，保留图标
+                                            content = content.replace(/(📌|✨|📝|🔍|📊)\s*(.*?)(?=\n|$)/g, '<p class="mb-3">$1 $2</p>');
+                                            // 将剩余的换行转换为<br>标签
+                                            content = content.replace(/\n/g, '<br>');
+                                            // 使用innerHTML代替textContent以支持HTML格式
+                                            proseDiv.innerHTML += content; // 将内容添加到prose div内部
+                                            fullSummary += content;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        
+                        readChunk().catch(error => {
+                            console.error('流式响应处理失败:', error);
+                            alert('RAG搜索失败，请稍后重试。');
+                            // 显示错误信息
+                            summaryContentEl.innerHTML = '<div class="text-red-500 py-4">RAG搜索失败，请稍后重试。</div>';
+                        });
+                        
+                        // 下载功能
+                        drawer.querySelector('#download-rag-result').addEventListener('click', () => {
+                            const blob = new Blob([fullSummary], { type: 'text/markdown;charset=utf-8' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'rag-summary.md';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        });
+                        
+                        // 复制功能
+                        drawer.querySelector('#copy-rag-result').addEventListener('click', () => {
+                            navigator.clipboard.writeText(fullSummary).then(() => {
+                                // 显示成功反馈
+                                const copyBtn = drawer.querySelector('#copy-rag-result');
+                                const originalHTML = copyBtn.innerHTML;
+                                const originalClass = copyBtn.className;
+                                
+                                copyBtn.innerHTML = '<i class="fa fa-check"></i>';
+                                copyBtn.className = 'btn-icon-success p-2 transition-all duration-200 scale-105';
+                                
+                                setTimeout(() => {
+                                    copyBtn.innerHTML = originalHTML;
+                                    copyBtn.className = originalClass;
+                                }, 1500);
+                            }).catch(err => {
+                                console.error('复制失败:', err);
+                                alert('复制失败，请重试');
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('RAG搜索失败:', error);
+                        alert('RAG搜索失败，请稍后重试。');
+                    })
+                    .finally(() => {
+                        // 恢复按钮状态
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                        // 关闭批量操作菜单
+                        batchMenu.style.display = 'none';
+                    });
+                });
+
+            // 批量删除功能
+            document.getElementById('batch-delete').addEventListener('click', function() {
+                const checkedCheckboxes = document.querySelectorAll('.document-checkbox:checked');
+                const documentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+                
+                if (documentIds.length > 0) {
+                    if (confirm(`确定要删除选中的 ${documentIds.length} 个文档吗？此操作不可撤销。`)) {
+                        // 发送批量删除请求
+                        fetch('/api/documents/batch-delete', {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ documentIds: documentIds })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('批量删除成功');
+                                // 刷新页面
+                                location.reload();
+                            } else {
+                                alert('批量删除失败：' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('批量删除失败:', error);
+                            alert('批量删除失败，请稍后重试。');
+                        })
+                        .finally(() => {
+                            // 关闭菜单
+                            batchMenu.style.display = 'none';
+                        });
+                    }
+                }
+            });
+        }
+                
+    });
+}
+        // 优化表格行悬停效果
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.classList.add('shadow-sm');
+            });
+            row.addEventListener('mouseleave', function() {
+                this.classList.remove('shadow-sm');
+            });
+        });
+        
+        // 日期选择器优化
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            // 设置最大日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            input.setAttribute('max', today);
+        });
+        
+        // 防止validateForm未定义错误
+        function validateForm() {
+            return true;
+        }
+    </script>
+</body>
+</html>
+

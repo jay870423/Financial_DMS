@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档详情 - 财务文档管理系统</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C',
+                        background: '#F2F3F5',
+                        surface: '#FFFFFF',
+                        text: {
+                            primary: '#1D2129',
+                            regular: '#4E5969',
+                            secondary: '#86909C',
+                            placeholder: '#C9CDD4'
+                        },
+                        border: {
+                            primary: '#E5E6EB',
+                            secondary: '#C9CDD4'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        card: '0 2px 12px 0 rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 4px 16px 0 rgba(0, 0, 0, 0.12)',
+                        dropdown: '0 6px 16px -8px rgba(0, 0, 0, 0.1), 0 9px 28px 0 rgba(0, 0, 0, 0.05)'
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow-sm {
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .text-balance {
+                text-wrap: balance;
+            }
+            .animate-pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+        }
+
+        /* 自定义工具类 */
+        .btn {
+            @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+        .btn-primary {
+            @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary/30;
+        }
+        .btn-secondary {
+            @apply bg-white text-text-primary border border-border-primary hover:bg-background focus:ring-primary/30;
+        }
+        .btn-icon {
+            @apply p-2 rounded-md text-text-regular hover:bg-background transition-colors duration-200;
+        }
+        .card {
+            @apply bg-surface rounded-lg shadow-card p-6 transition-all duration-200 hover:shadow-card-hover;
+        }
+        .info-item {
+            @apply mb-4 last:mb-0;
+        }
+        .info-item label {
+            @apply block text-text-secondary text-sm mb-1;
+        }
+        .info-item span {
+            @apply text-text-primary font-medium;
+        }
+        .tag {
+            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary mr-2 mb-2;
+        }
+        .badge {
+            @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+        }
+        .badge-dot {
+            @apply relative pl-5;
+        }
+        .badge-dot:before {
+            content: '';
+            @apply absolute left-1 top-1/2 w-2 h-2 rounded-full transform -translate-y-1/2;
+        }
+        .related-document-item {
+            @apply flex items-center p-3 rounded-lg hover:bg-background transition-colors duration-200 text-text-primary;
+        }
+        .related-document-item:hover {
+            @apply text-primary;
+        }
+        .document-pdf {
+            @apply text-danger;
+        }
+        .document-doc {
+            @apply text-primary;
+        }
+        .document-xls {
+            @apply text-success;
+        }
+        .document-ppt {
+            @apply text-warning;
+        }
+        .document-other {
+            @apply text-info;
+        }
+    </style>
+</head>
+<body class="font-inter bg-background text-text-primary min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-surface shadow-sm sticky top-0 z-30 transition-all duration-300">
+        <div class="container mx-auto px-4 flex items-center justify-between h-16">
+            <div class="flex items-center space-x-4">
+                <button id="mobile-menu-button" class="md:hidden text-text-regular">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 18V12M12 12V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span class="ml-2 text-xl font-bold text-text-primary">财务文档管理系统</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="btn-icon relative">
+                    <i class="fa fa-bell-o text-lg"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-danger rounded-full"></span>
+                </button>
+                <div class="flex items-center cursor-pointer" id="user-menu-button">
+                    <img src="https://picsum.photos/id/1005/200/200" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-border-primary" onerror="this.src='https://via.placeholder.com/32?text=用户'">
+                    <span class="ml-2 text-text-primary hidden sm:block">管理员</span>
+                    <i class="fa fa-chevron-down text-xs ml-1 text-text-secondary hidden sm:block"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 移动端侧边栏 -->
+    <div id="mobile-sidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 transform transition-transform duration-300 -translate-x-full">
+        <div class="w-64 h-full bg-surface overflow-y-auto">
+            <!-- 侧边栏内容 -->
+            <div class="p-4">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <svg class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 18V12M12 12V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="ml-2 font-bold">财务文档管理</span>
+                    </div>
+                    <button id="close-mobile-menu" class="text-text-secondary">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <nav class="space-y-1">
+                    <a href="/dashboard" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                        <i class="fa fa-dashboard w-5 text-center mr-3"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="/documents" class="flex items-center px-4 py-3 bg-primary/10 text-primary rounded-md transition-colors duration-200">
+                        <i class="fa fa-file-text-o w-5 text-center mr-3"></i>
+                        <span>文档管理</span>
+                    </a>
+                    <a href="/users" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                        <i class="fa fa-users w-5 text-center mr-3"></i>
+                        <span>用户管理</span>
+                    </a>
+                    <a href="/categories" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                        <i class="fa fa-folder-o w-5 text-center mr-3"></i>
+                        <span>分类管理</span>
+                    </a>
+                    <a href="/tags" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                        <i class="fa fa-tags w-5 text-center mr-3"></i>
+                        <span>标签管理</span>
+                    </a>
+                </nav>
+                <div class="mt-8">
+                    <h3 class="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wider">系统设置</h3>
+                    <nav class="space-y-1">
+                        <a href="/settings/profile" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                            <i class="fa fa-user-o w-5 text-center mr-3"></i>
+                            <span>个人资料</span>
+                        </a>
+                        <a href="/settings/security" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                            <i class="fa fa-lock w-5 text-center mr-3"></i>
+                            <span>安全设置</span>
+                        </a>
+                        <a href="/settings/system" class="flex items-center px-4 py-3 text-text-secondary hover:bg-background hover:text-primary rounded-md transition-colors duration-200">
+                            <i class="fa fa-cog w-5 text-center mr-3"></i>
+                            <span>系统设置</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户下拉菜单 -->
+    <div id="user-dropdown" class="hidden absolute right-4 top-16 w-48 bg-surface rounded-lg shadow-dropdown z-40">
+        <div class="py-2">
+            <a href="/settings/profile" class="block px-4 py-2 text-sm text-text-primary hover:bg-background transition-colors duration-200">
+                <i class="fa fa-user-o mr-2"></i>个人资料
+            </a>
+            <a href="/settings/security" class="block px-4 py-2 text-sm text-text-primary hover:bg-background transition-colors duration-200">
+                <i class="fa fa-lock mr-2"></i>账户安全
+            </a>
+            <div class="border-t border-border-primary my-1"></div>
+            <a href="/logout" class="block px-4 py-2 text-sm text-danger hover:bg-background transition-colors duration-200">
+                <i class="fa fa-sign-out mr-2"></i>退出登录
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <main class="flex-1 container mx-auto px-4 py-6">
+        <!-- 面包屑导航 -->
+        <div class="text-sm text-text-secondary mb-6">
+            <a href="/dashboard" class="hover:text-primary transition-colors duration-200">首页</a>
+            <span class="mx-2">/</span>
+            <a href="/documents" class="hover:text-primary transition-colors duration-200">文档管理</a>
+            <span class="mx-2">/</span>
+            <span class="text-text-regular" th:text="${document?.title}">文档详情</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧主要内容 -->
+            <div class="lg:col-span-2">
+                <!-- 文档详情头部 -->
+                <div class="card mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                        <div class="flex items-center mb-4 md:mb-0">
+                            <div class="w-12 h-12 rounded-md flex items-center justify-center text-2xl mr-4" th:classappend="'document-' + ${document?.type || 'other'}">
+                                <i class="fa" th:classappend="${document?.type == 'pdf' ? 'fa-file-pdf-o' : document?.type == 'doc' ? 'fa-file-word-o' : document?.type == 'xls' ? 'fa-file-excel-o' : document?.type == 'ppt' ? 'fa-file-powerpoint-o' : 'fa-file-o'}"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-balance mb-1" th:text="${document?.title}">文档标题</h1>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="badge bg-primary/10 text-primary" th:text="${document?.category}">财务报表</span>
+                                    <span class="badge bg-success/10 text-success" th:text="${document?.status}">已发布</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="btn btn-primary preview-button" title="预览文档">
+                                <i class="fa fa-eye mr-2"></i>预览
+                            </button>
+                            <button class="btn btn-secondary" title="下载文档">
+                                <i class="fa fa-download mr-2"></i>下载
+                            </button>
+                            <button class="btn btn-secondary edit-button" title="编辑文档" th:data-id="${document?.id}">
+                                <i class="fa fa-pencil mr-2"></i>编辑
+                            </button>
+                            <button class="btn btn-secondary" title="分享文档">
+                                <i class="fa fa-share-alt mr-2"></i>分享
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 文档预览区域 -->
+                    <div class="preview-container border border-border-primary rounded-lg overflow-hidden mb-6 bg-background/50">
+                        <div class="p-8 flex flex-col items-center justify-center min-h-[300px] text-text-secondary">
+                            <i class="fa fa-file-text-o text-5xl mb-4 opacity-50"></i>
+                            <p class="text-center">此处将显示文档预览内容</p>
+                            <p class="text-sm mt-2">在实际应用中，这里会加载相应的文档预览器</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 文档摘要 -->
+                    <div class="document-summary mb-4">
+                        <h2 class="text-xl font-semibold mb-3">文档摘要</h2>
+                        <p class="text-text-regular" th:text="${document?.summary}" th:unless="${document?.summary != null}">暂无摘要</p>
+                        <p class="text-text-regular" th:if="${document?.summary != null}" th:text="${document?.summary}">这是文档的摘要信息，包含文档的主要内容和重点信息。摘要可以帮助用户快速了解文档内容，无需阅读完整文档。</p>
+                    </div>
+                </div>
+                
+                <!-- 文档描述 -->
+                <div class="card mb-6">
+                    <h2 class="text-xl font-semibold mb-4">文档描述</h2>
+                    <div class="prose max-w-none" th:utext="${document?.description}" th:if="${document?.description != null}">
+                        <p>这是文档的详细描述内容，可以包含格式化文本、列表、表格等富文本内容。</p>
+                        <p>描述信息可以帮助用户全面了解文档的内容和用途，提供更多上下文信息。</p>
+                        <ul>
+                            <li>文档主要内容 1</li>
+                            <li>文档主要内容 2</li>
+                            <li>文档主要内容 3</li>
+                        </ul>
+                    </div>
+                    <p class="text-text-secondary" th:unless="${document?.description != null}">暂无描述</p>
+                </div>
+            </div>
+            
+            <!-- 右侧信息面板 -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 文档信息 -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold mb-4">文档信息</h2>
+                    <div class="space-y-4">
+                        <div class="info-item">
+                            <label>文件名称</label>
+                            <span th:text="${document?.fileName}">财务报表Q1.xlsx</span>
+                        </div>
+                        <div class="info-item">
+                            <label>文件类型</label>
+                            <span th:text="${document?.type?.toUpperCase()}">XLSX</span>
+                        </div>
+                        <div class="info-item">
+                            <label>文件大小</label>
+                            <span th:text="${document?.fileSize}">2.5 MB</span>
+                        </div>
+                        <div class="info-item">
+                            <label>创建者</label>
+                            <div class="flex items-center">
+                                <img src="https://picsum.photos/id/1005/200/200" alt="创建者头像" class="w-6 h-6 rounded-full object-cover mr-2" onerror="this.src='https://via.placeholder.com/24?text=用户'">
+                                <span th:text="${document?.creator}">张三</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>创建时间</label>
+                            <span th:text="${document?.createdTime}">2024-01-15 10:30:00</span>
+                        </div>
+                        <div class="info-item">
+                            <label>最后修改时间</label>
+                            <span th:text="${document?.lastModified}">2024-01-20 15:45:00</span>
+                        </div>
+                        <div class="info-item">
+                            <label>访问次数</label>
+                            <span th:text="${document?.viewCount}">128</span>
+                        </div>
+                        <div class="info-item">
+                            <label>下载次数</label>
+                            <span th:text="${document?.downloadCount}">42</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 标签 -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold mb-4">标签</h2>
+                    <div class="flex flex-wrap">
+                        <th:block th:if="${document?.tags != null and document?.tags.size() > 0}">
+                            <span th:each="tag : ${document?.tags}" th:text="${tag}" class="tag"></span>
+                        </th:block>
+                        <span th:unless="${document?.tags != null and document?.tags.size() > 0}" class="text-text-secondary">无标签</span>
+                    </div>
+                </div>
+                
+                <!-- 相关文档 -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold mb-4">相关文档</h2>
+                    <div class="space-y-2">
+                        <th:block th:if="${relatedDocuments != null and relatedDocuments.size() > 0}">
+                            <a th:each="related : ${relatedDocuments}" th:href="@{/documents/{id}/view(id=${related.id})}" class="related-document-item">
+                                <div class="related-document-icon mr-3" th:classappend="'document-' + ${related.type}">
+                                    <i class="fa" th:classappend="${related.type == 'pdf' ? 'fa-file-pdf-o' : related.type == 'doc' ? 'fa-file-word-o' : related.type == 'xls' ? 'fa-file-excel-o' : related.type == 'ppt' ? 'fa-file-powerpoint-o' : 'fa-file-o'}"></i>
+                                </div>
+                                <span th:text="${related.title}" class="text-sm truncate"></span>
+                            </a>
+                        </th:block>
+                        <span th:unless="${relatedDocuments != null and relatedDocuments.size() > 0}" class="text-text-secondary block px-3 py-2">暂无相关文档</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-surface border-t border-border-primary py-6 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-text-secondary text-sm">&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="/about" class="text-text-secondary hover:text-primary transition-colors duration-200 text-sm">关于系统</a>
+                    <a href="/help" class="text-text-secondary hover:text-primary transition-colors duration-200 text-sm">帮助中心</a>
+                    <a href="#" class="text-text-secondary hover:text-primary transition-colors duration-200 text-sm">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 移动菜单切换
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenu = document.getElementById('close-mobile-menu');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileSidebar.classList.remove('-translate-x-full');
+            document.body.classList.add('overflow-hidden');
+        });
+        
+        closeMobileMenu.addEventListener('click', () => {
+            mobileSidebar.classList.add('-translate-x-full');
+            document.body.classList.remove('overflow-hidden');
+        });
+        
+        // 点击移动侧边栏外部关闭菜单
+        mobileSidebar.addEventListener('click', (e) => {
+            if (e.target === mobileSidebar) {
+                mobileSidebar.classList.add('-translate-x-full');
+                document.body.classList.remove('overflow-hidden');
+            }
+        });
+        
+        // 用户下拉菜单
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        userMenuButton.addEventListener('click', () => {
+            userDropdown.classList.toggle('hidden');
+        });
+        
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            if (!userMenuButton.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+        
+        // 页面滚动时导航栏样式变化
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow');
+            } else {
+                header.classList.remove('shadow');
+            }
+        });
+        
+        // 页面加载后更新访问次数
+        document.addEventListener('DOMContentLoaded', function() {
+            // 实际应用中应该通过Ajax更新访问次数
+            console.log('更新文档访问次数');
+        });
+        
+        // 预览按钮功能
+        document.querySelectorAll('.preview-button').forEach(button => {
+            button.addEventListener('click', function() {
+                // 实际应用中应该实现对应的预览功能
+                console.log('预览按钮点击:', this.title);
+                // 这里可以添加预览加载动画
+                const previewContainer = document.querySelector('.preview-container');
+                if (previewContainer) {
+                    previewContainer.innerHTML = '<div class="p-8 flex flex-col items-center justify-center min-h-[300px]">' +
+                        '<div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>' +
+                        '<p class="text-text-secondary">正在加载文档预览...</p>' +
+                        '</div>';
+                    
+                    // 模拟加载延迟
+                    setTimeout(() => {
+                        previewContainer.innerHTML = '<div class="p-8 flex flex-col items-center justify-center min-h-[300px] text-text-secondary">' +
+                            '<i class="fa fa-file-text-o text-5xl mb-4 opacity-50"></i>' +
+                            '<p class="text-center">此处将显示文档预览内容</p>' +
+                            '<p class="text-sm mt-2">在实际应用中，这里会加载相应的文档预览器</p>' +
+                            '</div>';
+                    }, 1500);
+                }
+            });
+        });
+        
+        // 编辑按钮点击事件
+        document.querySelectorAll('.edit-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const documentId = this.getAttribute('data-id');
+                window.location.href = `/documents/${documentId}/edit`;
+            });
+        });
+        
+        // 为所有按钮添加点击波纹效果
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('absolute', 'bg-white', 'opacity-30', 'rounded-full', 'transform', 'scale-0', 'animate-ping');
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档列表 - 财务文档管理系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <!-- 整体布局容器 -->
+    <div class="layout-container">
+        <!-- 左侧导航�?-->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="sidebar-logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 17V5C3 3.89 3.89 3 5 3H19C20.11 3 21 3.89 21 5V17C21 18.11 20.11 19 19 19H16.5L12 23.5L7.5 19H5C3.89 19 3 18.11 3 17Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>财务文档管理系统</span>
+                </a>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">主菜�?/div>
+                <div class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <div class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">仪表�?/span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/documents" class="nav-link active">
+                        <div class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">文档管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/users" class="nav-link">
+                        <div class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">用户管理</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section-title">系统设置</div>
+                <div class="nav-item">
+                    <a href="/settings" class="nav-link">
+                        <div class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M19.4 15C19.2669 15.3012 19.1583 15.6208 19.0793 15.9524C19.0003 16.284 18.9527 16.6253 18.9391 16.968C18.9255 17.3107 18.9465 17.6542 19.0024 17.9912C19.0583 18.3282 19.1487 18.6571 19.2713 18.9707C19.394 19.2843 19.5467 19.5794 19.7252 19.8478C19.9037 20.1161 20.1063 20.3566 20.3287 20.5658C20.5511 20.775 20.7915 20.9535 21.06 21.0998C21.3284 21.2461 21.6057 21.3583 21.887 21.4333C22.1682 21.5083 22.4534 21.545 22.7381 21.5422C23.0229 21.5394 23.3048 21.497 23.5785 21.4166C23.8523 21.3362 24.1143 21.2187 24.3597 21.0665C24.6051 20.9143 24.8309 20.7292 25.0322 20.5152C25.2334 20.3012 25.4078 20.0614 25.5518 19.8028C25.6958 19.5442 25.8076 19.2704 25.8843 18.9873C25.961 18.698 26 18.3965 26 18.092C26 17.7875 25.961 17.486 25.8843 17.1967C25.8076 16.9036 25.6958 16.6298 25.5518 16.3712C25.4078 16.1126 25.2334 15.8728 25.0322 15.6588C24.8309 15.4448 24.6051 15.2597 24.3597 15.1075C24.1143 14.9553 23.8523 14.8378 23.5785 14.7574C23.3048 14.677 23.0229 14.6346 22.7381 14.6318C22.4534 14.629 22.1682 14.6657 21.887 14.7407C21.6057 14.8157 21.3284 14.9279 21.06 15.0742C20.7915 15.2205 20.5511 15.399 20.3287 15.6082C20.1063 15.8174 19.9037 16.0579 19.7252 16.3263C19.5467 16.5946 19.394 16.8897 19.2713 17.2033C19.1487 17.5169 19.0583 17.8458 19.0024 18.1828C18.9465 18.5198 18.9255 18.8633 18.9391 19.206C18.9527 19.5487 19.0003 19.8899 19.0793 20.2215C19.1583 20.5531 19.2669 20.8728 19.4 21.174V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">系统设置</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区�?-->
+        <div class="content-wrapper">
+            <!-- 顶部导航�?-->
+            <header class="main-header">
+                <div class="header-container">
+                    <div class="header-left">
+                        <h2 class="page-title">文档管理</h2>
+                    </div>
+                    
+                    <div class="header-right">
+                        <div class="user-profile">
+                            <div class="profile-info">
+                                <span th:text="${currentUser?.name}" class="user-name">用户�?/span>
+                                <span class="user-role" th:text="${currentUser?.role}">角色</span>
+                            </div>
+                            <div class="profile-avatar">
+                                <img th:src="@{/images/avatar-placeholder.svg}" alt="用户头像" class="avatar-image">
+                            </div>
+                        </div>
+                        
+                        <a href="/logout" class="logout-button">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M9 21H5C3.89 21 3 20.11 3 19V5C3 3.89 3.89 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 17L21 12L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            退出登�?                        </a>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 主内容区�?-->
+            <main class="main-content">
+                <!-- 页面标题和操�?-->
+                <div class="page-header card">
+                    <div class="header-left">
+                        <h1>文档管理</h1>
+                        <p>管理您的财务文档、报表和凭证</p>
+                    </div>
+                    <div class="header-actions">
+                        <a href="/documents/upload" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            上传新文�?                        </a>
+                        <button id="batch-actions" class="btn btn-outline">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 8H4C3.44772 8 3 8.44772 3 9V15C3 15.5523 3.44772 16 4 16H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="8" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            批量操作
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 搜索和筛选区�?-->
+                <div class="filter-section card">
+                    <form id="search-form" action="/documents" method="get">
+                        <div class="search-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <input type="text" id="search-input" name="keyword" placeholder="搜索文档标题、内容或标签" class="search-input" th:value="${searchKeyword}">
+                            <button type="submit" id="search-button" class="btn btn-primary search-button">搜索</button>
+                        </div>
+                        
+                        <div class="filter-options">
+                            <div class="filter-group">
+                                <label for="category-filter" class="filter-label">类别</label>
+                                <select id="category-filter" name="category" class="form-control filter-select" th:value="${activeCategory}">
+                                    <option value="">全部类别</option>
+                                    <option value="invoice">发票</option>
+                                    <option value="contract">合同</option>
+                                    <option value="report">报表</option>
+                                    <option value="receipt">收据</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="date-filter" class="filter-label">日期范围</label>
+                                <input type="date" id="date-filter-start" name="startDate" class="form-control filter-date">
+                                <span>�?/span>
+                                <input type="date" id="date-filter-end" name="endDate" class="form-control filter-date">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="sort-filter" class="filter-label">排序方式</label>
+                                <select id="sort-filter" name="sort" class="form-control filter-select">
+                                    <option value="lastModified-desc">最近修�?(降序)</option>
+                                    <option value="lastModified-asc">最近修�?(升序)</option>
+                                    <option value="title-asc">标题 (A-Z)</option>
+                                    <option value="title-desc">标题 (Z-A)</option>
+                                    <option value="size-desc">文件大小 (降序)</option>
+                                    <option value="size-asc">文件大小 (升序)</option>
+                                </select>
+                            </div>
+                            
+                            <button type="button" id="reset-filters" class="btn btn-secondary">重置筛�?/button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- 文档列表 -->
+                <div class="document-list-container card">
+                    <table class="document-table table">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column">
+                                    <input type="checkbox" id="select-all">
+                                </th>
+                                <th>标题</th>
+                                <th>类别</th>
+                                <th>标签</th>
+                                <th>文件大小</th>
+                                <th>上传日期</th>
+                                <th>最后修�?/th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <th:block th:if="${documents != null and documents.size() > 0}">
+                                <tr th:each="document : ${documents}">
+                                    <td class="checkbox-column">
+                                        <input type="checkbox" class="document-checkbox" th:value="${document.id}">
+                                    </td>
+                                    <td class="document-title">
+                                        <div class="document-info">
+                                            <div class="document-icon flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg" 
+                                                 th:classappend="${document.fileName != null ? (
+                                                     #strings.containsIgnoreCase(document.fileName, '.pdf') ? 'bg-red-50 text-red-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.doc') || #strings.containsIgnoreCase(document.fileName, '.docx') ? 'bg-blue-50 text-blue-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.xls') || #strings.containsIgnoreCase(document.fileName, '.xlsx') ? 'bg-green-50 text-green-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.txt') ? 'bg-gray-50 text-gray-500' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.jpg') || #strings.containsIgnoreCase(document.fileName, '.jpeg') || #strings.containsIgnoreCase(document.fileName, '.png') ? 'bg-purple-50 text-purple-500' :
+                                                     'bg-blue-50 text-primary'
+                                                 ) : 'bg-blue-50 text-primary'}">
+                                                <i th:class="${document.fileName != null ? (
+                                                     #strings.containsIgnoreCase(document.fileName, '.pdf') ? 'fa fa-file-pdf-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.doc') || #strings.containsIgnoreCase(document.fileName, '.docx') ? 'fa fa-file-word-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.xls') || #strings.containsIgnoreCase(document.fileName, '.xlsx') ? 'fa fa-file-excel-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.txt') ? 'fa fa-file-text-o text-xl' :
+                                                     #strings.containsIgnoreCase(document.fileName, '.jpg') || #strings.containsIgnoreCase(document.fileName, '.jpeg') || #strings.containsIgnoreCase(document.fileName, '.png') ? 'fa fa-file-image-o text-xl' :
+                                                     'fa fa-file-o text-xl'
+                                                 ) : 'fa fa-file-o text-xl'}"></i>
+                                            </div>
+                                            <div>
+                                                <h3 th:text="${document.title}"></h3>
+                                                <p class="document-filename" th:text="${document.fileName}"></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span th:text="${document.category}" class="badge" th:classappend="'category-' + ${document.category}"></span>
+                                    </td>
+                                    <td>
+                                        <th:block th:if="${document.tags != null and not document.tags.isEmpty()}">
+                                            <th:block th:each="tag : ${document.tags.split(',')}">
+                                                <span class="tag bg-gray-100 text-gray-800 hover:bg-gray-200" th:text="${tag.trim()}">标签</span>
+                                            </th:block>
+                                        </th:block>
+                                        <th:block th:unless="${document.tags != null and not document.tags.isEmpty()}">
+                                            <span class="text-xs text-gray-400">无标�?/span>
+                                        </th:block>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                                        <div class="text-sm text-gray-500"
+                                             th:text="${document.fileSize != null && document.fileSize > 0 ? (
+                                                 document.fileSize < 1024 ? (document.fileSize + ' B') :
+                                                 document.fileSize < 1048576 ? (#numbers.formatDecimal(document.fileSize / 1024, 1, 2) + ' KB') :
+                                                 (#numbers.formatDecimal(document.fileSize / 1048576, 1, 2) + ' MB')
+                                              ) : '未知'}">文件大小</div>
+                                    </td>
+                                    <td class="text-sm text-gray-500" th:text="${document != null and document.createdDate != null ? #dates.format(document.createdDate, 'yyyy-MM-dd HH:mm:ss') : ''}"></td>
+                                        <td class="text-sm text-gray-500" th:text="${document != null and document.lastModified != null ? #dates.format(document.lastModified, 'yyyy-MM-dd HH:mm:ss') : ''}"></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a th:href="@{/documents/{id}/view(id=${document.id})}" class="action-button view" title="查看">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                                    <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </a>
+                                            <a th:href="@{/documents/{id}/edit(id=${document.id})}" class="action-button edit" title="编辑">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                                    <path d="M11 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H20C20.5523 19 21 18.5523 21 18V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M18.5 2.5C18.8978 2.10218 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10218 21.5 2.5C21.8978 2.89782 22.1213 3.4374 22.1213 4C22.1213 4.5626 21.8978 5.10218 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </a>
+                                            <a th:href="@{/documents/{id}/download(id=${document.id})}" class="action-button download" title="下载">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                                    <path d="M21 15V19C21 20.11 20.11 21 19 21H5C3.89 21 3 20.11 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </a>
+                                            <form th:action="@{/documents/{id}/delete(id=${document.id})}" method="post" style="display: inline;">
+                                                <button type="submit" class="action-button delete" title="删除" onclick="return confirm('确定要删除此文档吗？')">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                                        <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        <path d="M19 6V20C19 20.5523 18.5523 21 18 21H6C5.44772 21 5 20.5523 5 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </th:block>
+                            <tr th:unless="${documents != null and documents.size() > 0}">
+                                <td colspan="8" class="empty-state">
+                                    <div class="empty-icon">
+                                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                                            <path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2Z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M14 2V8H20" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 13H8" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 17H8" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M10 9H8" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </div>
+                                    <h3>暂无文档</h3>
+                                    <p>您还没有上传任何文档，点击上方按钮开始上�?/p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页控件 -->
+                <div class="pagination-container card" th:if="${documents != null and documents.size() > 0}">
+                <div class="pagination-info">
+                    显示�?<span th:text="${pagination.startItem}">1</span>-<span th:text="${pagination.endItem}">10</span> 条，�?<span th:text="${pagination.totalItems}">100</span> �?                </div>
+                <div class="pagination-controls">
+                    <a th:href="@{/documents(page=${pagination.currentPage-1},keyword=${searchKeyword},category=${activeCategory})}" th:classappend="{disabled: ${pagination.currentPage <= 1}}" class="pagination-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        上一�?                    </a>
+                    
+                    <th:block th:each="page : ${pagination.pages}">
+                        <a th:href="@{/documents(page=${page.number},keyword=${searchKeyword},category=${activeCategory})}" th:classappend="{active: ${page.number == pagination.currentPage}}" class="pagination-page">
+                            <span th:text="${page.number}">1</span>
+                        </a>
+                    </th:block>
+                    
+                    <a th:href="@{/documents(page=${pagination.currentPage+1},keyword=${searchKeyword},category=${activeCategory})}" th:classappend="{disabled: ${pagination.currentPage >= pagination.totalPages}}" class="pagination-button">
+                        下一�?                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="pagination-size">
+                    <label for="page-size-select">每页显示:</label>
+                    <select id="page-size-select" class="page-size-select" 
+                            th:onchange="|window.location.href='@{/documents(page=1,size=' + this.value + ',keyword=${searchKeyword},category=${activeCategory})}'|">
+                        <option th:value="10" th:selected="${pagination.pageSize == 10}">10</option>
+                        <option th:value="20" th:selected="${pagination.pageSize == 20}">20</option>
+                        <option th:value="50" th:selected="${pagination.pageSize == 50}">50</option>
+                    </select>
+                </div>
+            </div>
+            </main>
+            
+            <!-- 页脚 -->
+            <footer class="main-footer">
+                <div class="footer-container">
+                    <div class="footer-left">
+                        <p>© 2024 财务文档管理系统. 保留所有权�?</p>
+                    </div>
+                    <div class="footer-right">
+                        <a href="/about" class="footer-link">关于系统</a>
+                        <a href="/help" class="footer-link">帮助中心</a>
+                        <a href="#" class="footer-link">联系我们</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script>
+        // 全选/取消全选功能
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.document-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBatchActionsButton();
+        });
+        
+        // 单个复选框状态变化时更新批量操作按钮状态
+        document.querySelectorAll('.document-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateBatchActionsButton);
+        });
+        
+        // 更新批量操作按钮状态
+        function updateBatchActionsButton() {
+            const checkboxes = document.querySelectorAll('.document-checkbox:checked');
+            const batchButton = document.getElementById('batch-actions');
+            batchButton.disabled = checkboxes.length === 0;
+            batchButton.classList.toggle('disabled', checkboxes.length === 0);
+        }
+        
+        // 重置筛选条功能
+        document.getElementById('reset-filters').addEventListener('click', function() {
+            document.getElementById('category-filter').value = '';
+            document.getElementById('date-filter-start').value = '';
+            document.getElementById('date-filter-end').value = '';
+            document.getElementById('sort-filter').value = 'lastModified-desc';
+            document.getElementById('search-input').value = '';
+            
+            // 重置后提交表�?            document.getElementById('search-form').submit();
+        });
+        
+        // 类别筛选变化时自动提交
+        document.getElementById('category-filter').addEventListener('change', function() {
+            document.getElementById('search-form').submit();
+        });
+        
+        // 防抖搜索功能
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                // 如果搜索框为空，可以选择不自动提�?                if (this.value.length > 0 || this.value.length === 0) {
+                    // 这里可以根据需要决定是否自动提�?                }
+            }, 500);
+        });
+        
+        // 键盘事件监听
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('search-button').click();
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档预览 - 财务文档管理系统</title>
+    <!-- 使用CDN加载Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 使用CDN加载Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 配置Tailwind CSS自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b',
+                        accent: '#0ea5e9',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        error: '#ef4444',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-thin {
+                scrollbar-width: thin;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .text-balance {
+                text-wrap: balance;
+            }
+        }
+    </style>
+    <!-- 引入文档预览库 -->
+    <!-- PDF.js - PDF文档预览 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
+    
+    <!-- mammoth.js - DOCX文档预览 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
+    <!-- xlsx.js - Excel文档预览 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- highlight.js - 代码高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    
+    <!-- showdown.js - Markdown渲染 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    
+    <style>
+        /* 代码高亮样式 */
+        pre {
+            background-color: #f3f4f6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        code {
+            background-color: #f3f4f6;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875em;
+        }
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        /* 内容区域过渡动画 */
+        .content-container {
+            transition: all 0.3s ease;
+        }
+        /* 加载动画 */
+        .loader {
+            border-top-color: #2563eb;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* PDF预览容器 */
+        #pdf-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .pdf-page {
+            margin: 0 auto 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease;
+        }
+        .pdf-page:hover {
+            transform: scale(1.01);
+        }
+        /* DOCX样式保留 */
+        .docx-content h1, .docx-content h2, .docx-content h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        .docx-content h1 { font-size: 1.875rem; }
+        .docx-content h2 { font-size: 1.5rem; }
+        .docx-content h3 { font-size: 1.25rem; }
+        .docx-content p { margin-bottom: 1rem; }
+        .docx-content ul, .docx-content ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+        .docx-content blockquote { margin: 1rem 0; padding-left: 1rem; border-left: 4px solid #e2e8f0; }
+        /* 文档预览工具栏 */
+        .preview-toolbar {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .preview-toolbar button {
+            padding: 0.25rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            background-color: white;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preview-toolbar button:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .preview-toolbar button.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <nav class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="/" class="flex items-center gap-2 text-primary font-semibold text-xl">
+                    <i class="fa fa-file-text-o text-2xl"></i>
+                    <span>财务文档管理系统</span>
+                </a>
+                <span class="text-gray-300">/</span>
+                <h1 class="text-gray-700 font-medium text-lg truncate max-w-[200px] sm:max-w-md" id="document-title">文档预览</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="back-btn" class="flex items-center gap-1 text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa fa-arrow-left"></i>
+                    <span>返回列表</span>
+                </button>
+                <div class="relative">
+                    <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 border-2 border-gray-200">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <span th:text="${user != null ? user.username : 'admin'}" class="hidden sm:inline">admin</span>
+                        <i class="fa fa-caret-down text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="flex-1 container mx-auto px-4 py-6">
+        <!-- 文档信息卡片 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-100">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800" id="file-name"></h2>
+                    <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <span class="flex items-center gap-1">
+                            <i class="fa fa-file-o"></i>
+                            <span id="file-type"></span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i class="fa fa-file-text-o"></i>
+                            <span id="file-size"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="download-btn" class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                        <i class="fa fa-download"></i>
+                        <span>下载文档</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预览区域 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <!-- 预览工具栏 -->
+            <div class="preview-toolbar hidden" id="preview-toolbar">
+                <button id="zoom-in-btn" class="flex items-center gap-1"><i class="fa fa-search-plus"></i> 放大</button>
+                <button id="zoom-out-btn" class="flex items-center gap-1"><i class="fa fa-search-minus"></i> 缩小</button>
+                <button id="reset-zoom-btn" class="flex items-center gap-1"><i class="fa fa-refresh"></i> 重置</button>
+                <button id="fit-width-btn" class="flex items-center gap-1"><i class="fa fa-arrows-h"></i> 适应宽度</button>
+                <button id="download-original-btn" class="ml-auto flex items-center gap-1 bg-primary text-white border-primary"><i class="fa fa-download"></i> 下载原始文件</button>
+            </div>
+            
+            <!-- 加载状态 -->
+            <div id="loading-state" class="flex flex-col items-center justify-center h-64 p-6">
+                <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full"></div>
+                <p class="mt-4 text-gray-500">正在加载文档内容...</p>
+            </div>
+            
+            <!-- 内容区域 -->
+            <div id="content-container" class="content-container hidden p-6">
+                <!-- 文本内容区域 -->
+                <div id="text-content" class="hidden">
+                    <div class="prose prose-slate max-w-none" id="document-content"></div>
+                </div>
+                
+                <!-- PDF内容区域 -->
+                <div id="pdf-container" class="hidden"></div>
+                
+                <!-- DOCX内容区域 -->
+                <div id="docx-content" class="hidden docx-content"></div>
+                
+                <!-- Excel内容区域 -->
+                <div id="excel-container" class="hidden overflow-x-auto"></div>
+                
+                <!-- 图片内容区域 -->
+                <div id="image-container" class="hidden flex justify-center items-center">
+                    <img id="preview-image" class="max-w-full max-h-[70vh] object-contain" src="" alt="图片预览">
+                </div>
+                
+                <!-- 不支持的格式提示 -->
+                <div id="unsupported-format" class="hidden flex flex-col items-center justify-center py-10 text-center">
+                    <div class="text-gray-400 text-6xl mb-4">
+                        <i class="fa fa-file-o"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">不支持的文件格式</h3>
+                    <p class="text-gray-500 mb-4">该文件格式不支持在线预览，请下载查看</p>
+                    <button id="download-unsupported-btn" class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                        <i class="fa fa-download"></i>
+                        <span>下载文档</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 错误状态 -->
+            <div id="error-state" class="hidden flex flex-col items-center justify-center h-64 text-center p-8">
+                <div class="text-error text-6xl mb-4">
+                    <i class="fa fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">无法加载文档</h3>
+                <p class="text-gray-500 mb-4" id="error-message">文档内容加载失败，请稍后重试</p>
+                <button id="retry-btn" class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                    <i class="fa fa-refresh"></i>
+                    <span>重试</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© 2024 财务文档管理系统 - 文档预览功能</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 获取URL路径中的文档ID
+        function getDocumentId() {
+            // 从路径中提取最后一部分作为ID
+            const pathParts = window.location.pathname.split('/');
+            return pathParts[pathParts.length - 1];
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 重置所有内容容器的显示状态
+        function resetContentContainers() {
+            document.getElementById('text-content').classList.add('hidden');
+            document.getElementById('pdf-container').classList.add('hidden');
+            document.getElementById('docx-content').classList.add('hidden');
+            document.getElementById('excel-container').classList.add('hidden');
+            document.getElementById('image-container').classList.add('hidden');
+            document.getElementById('unsupported-format').classList.add('hidden');
+        }
+
+        // 高亮显示文本内容
+        function highlightContent(content) {
+            // 处理常见的文本格式
+            let formattedContent = content
+                // 代码块
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                // 行内代码
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                // 段落
+                .replace(/\n\n+/g, '</p><p>')
+                .replace(/^([^<]|[^<].*?[^>])$/gm, '<p>$1</p>')
+                // 标题
+                .replace(/^###\s(.*$)/gm, '<h3>$1</h3>')
+                .replace(/^##\s(.*$)/gm, '<h2>$1</h2>')
+                .replace(/^#\s(.*$)/gm, '<h1>$1</h1>');
+            
+            // 应用代码高亮
+            return formattedContent;
+        }
+
+        // 渲染Markdown内容
+        function renderMarkdown(content) {
+            const converter = new showdown.Converter({
+                tables: true,
+                strikethrough: true,
+                tasklists: true,
+                ghCodeBlocks: true,
+                ghCompatibleHeaderId: true
+            });
+            return converter.makeHtml(content);
+        }
+
+        // 渲染PDF文档
+        async function renderPDF(url, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                const pdf = await loadingTask.promise;
+                
+                // 显示总页数
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'text-center text-sm text-gray-500 mb-4';
+                infoDiv.textContent = `共 ${pdf.numPages} 页`;
+                container.appendChild(infoDiv);
+                
+                // 渲染每一页
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    
+                    // 设置缩放比例
+                    const scale = 1.5;
+                    const viewport = page.getViewport({ scale: scale });
+                    
+                    // 创建画布
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page';
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    // 渲染页面到画布
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    
+                    await page.render(renderContext).promise;
+                    container.appendChild(canvas);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('PDF渲染失败:', error);
+                return false;
+            }
+        }
+
+        // 渲染DOCX文档
+        async function renderDOCX(arrayBuffer) {
+            try {
+                const result = await mammoth.convertToHtml({
+                    arrayBuffer: arrayBuffer
+                });
+                
+                document.getElementById('docx-content').innerHTML = result.value;
+                return true;
+            } catch (error) {
+                console.error('DOCX渲染失败:', error);
+                return false;
+            }
+        }
+
+        // 渲染Excel文档
+        function renderExcel(arrayBuffer) {
+            try {
+                // 增强的Excel读取选项
+                const workbook = XLSX.read(arrayBuffer, {
+                    type: 'array',
+                    cellStyles: true,
+                    cellHTML: true,
+                    sheetStubs: true
+                });
+                
+                const sheetNames = workbook.SheetNames;
+                let htmlOutput = '';
+                
+                // 为每个工作表创建表格
+                sheetNames.forEach((sheetName, index) => {
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // 增强表格渲染选项
+                    const htmlTable = XLSX.utils.sheet_to_html(worksheet, {
+                        id: `excel-sheet-${index}`,
+                        editable: false,
+                        header: true,
+                        raw: false,
+                        skipHidden: true,
+                        // 自定义样式以改善显示效果
+                        tableClass: 'w-full border-collapse',
+                        headerClass: 'bg-gray-50 font-semibold text-gray-700',
+                        cellClass: 'border p-2 text-sm'
+                    });
+                    
+                    htmlOutput += `
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                                <i class="fa fa-table text-primary"></i>
+                                ${sheetName}
+                            </h3>
+                            <div class="overflow-x-auto border rounded-lg">${htmlTable}</div>
+                        </div>
+                    `;
+                });
+                
+                const excelContainer = document.getElementById('excel-container');
+                excelContainer.innerHTML = htmlOutput;
+                
+                // 添加表格样式增强
+                addExcelTableStyles();
+                
+                return true;
+            } catch (error) {
+                console.error('Excel渲染失败:', error);
+                // 更详细的错误日志
+                console.log('错误类型:', error.name);
+                console.log('错误详情:', error.message);
+                return false;
+            }
+        }
+        
+        // 添加Excel表格样式增强
+        function addExcelTableStyles() {
+            // 创建样式元素
+            let styleElement = document.getElementById('excel-table-styles');
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = 'excel-table-styles';
+                document.head.appendChild(styleElement);
+            }
+            
+            // 增强Excel表格样式
+            styleElement.textContent = `
+                /* Excel表格增强样式 */
+                .xlsx-table {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 0.375rem;
+                    overflow: hidden;
+                }
+                .xlsx-table th {
+                    background-color: #f1f5f9;
+                    font-weight: 600;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                }
+                .xlsx-table td {
+                    border: 1px solid #e2e8f0;
+                    padding: 0.375rem 0.5rem;
+                    white-space: nowrap;
+                }
+                .xlsx-table tr:nth-child(even) {
+                    background-color: #f8fafc;
+                }
+                .xlsx-table tr:hover {
+                    background-color: #f1f5f9;
+                }
+                /* 处理长内容 */
+                .xlsx-table td {
+                    max-width: 200px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            `;
+        }
+
+        // 渲染图片
+        function renderImage(url) {
+            const img = document.getElementById('preview-image');
+            img.src = url;
+            return true;
+        }
+
+        // 根据文件类型加载文档
+        async function loadDocumentByType(docId, fileName, contentType) {
+            const fileUrl = `/documents/download/${docId}`;
+            const extension = fileName.split('.').pop().toLowerCase();
+            
+            // 显示工具栏
+            document.getElementById('preview-toolbar').classList.remove('hidden');
+            
+            resetContentContainers();
+            
+            // 根据文件类型选择渲染方式
+            try {
+                if (['pdf'].includes(extension)) {
+                    document.getElementById('pdf-container').classList.remove('hidden');
+                    const success = await renderPDF(fileUrl, 'pdf-container');
+                    if (!success) {
+                        document.getElementById('pdf-container').classList.add('hidden');
+                        document.getElementById('unsupported-format').classList.remove('hidden');
+                    }
+                } else if (['docx', 'doc'].includes(extension)) {
+                    document.getElementById('docx-content').classList.remove('hidden');
+                    const response = await fetch(fileUrl);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const success = await renderDOCX(arrayBuffer);
+                    if (!success) {
+                        document.getElementById('docx-content').classList.add('hidden');
+                        document.getElementById('unsupported-format').classList.remove('hidden');
+                    }
+                } else if (['xlsx', 'xls', 'csv'].includes(extension)) {
+                    document.getElementById('excel-container').classList.remove('hidden');
+                    try {
+                        // 增加错误处理和进度提示
+                        const response = await fetch(fileUrl);
+                        if (!response.ok) {
+                            throw new Error(`网络错误: ${response.status}`);
+                        }
+                        
+                        // 对于大文件，显示加载进度
+                        const contentLength = response.headers.get('content-length');
+                        let loadedBytes = 0;
+                        
+                        const reader = response.body.getReader();
+                        const chunks = [];
+                        
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            
+                            chunks.push(value);
+                            loadedBytes += value.length;
+                            
+                            // 如果能获取到内容长度，显示加载进度
+                            if (contentLength) {
+                                const progress = Math.round((loadedBytes / contentLength) * 100);
+                                console.log(`Excel加载进度: ${progress}%`);
+                            }
+                        }
+                        
+                        // 合并数据块
+                        const arrayBuffer = new Blob(chunks).arrayBuffer();
+                        const success = renderExcel(await arrayBuffer);
+                        
+                        if (!success) {
+                            document.getElementById('excel-container').classList.add('hidden');
+                            document.getElementById('unsupported-format').classList.remove('hidden');
+                        }
+                    } catch (error) {
+                        console.error('Excel文件加载失败:', error);
+                        // 显示友好的错误信息
+                        document.getElementById('excel-container').classList.add('hidden');
+                        document.getElementById('error-state').classList.remove('hidden');
+                        document.getElementById('error-message').textContent = 
+                            `Excel文件加载失败: ${error.message}。请尝试下载文件查看。`;
+                    }
+                } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(extension)) {
+                    document.getElementById('image-container').classList.remove('hidden');
+                    renderImage(fileUrl);
+                } else if (['txt', 'md', 'markdown', 'html', 'htm', 'json', 'xml', 'js', 'css', 'py', 'java', 'c', 'cpp', 'cs', 'php'].includes(extension)) {
+                    // 文本类文件
+                    document.getElementById('text-content').classList.remove('hidden');
+                    
+                    // 获取文本内容
+                    const response = await fetch(`/documents/preview/${docId}`);
+                    const data = await response.json();
+                    
+                    let formattedContent;
+                    if (['md', 'markdown'].includes(extension)) {
+                        // 处理Markdown
+                        formattedContent = renderMarkdown(data.content || '');
+                    } else {
+                        // 处理普通文本
+                        formattedContent = highlightContent(data.content || '');
+                    }
+                    
+                    document.getElementById('document-content').innerHTML = formattedContent;
+                    
+                    // 应用代码高亮
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                } else {
+                    // 不支持的格式
+                    document.getElementById('unsupported-format').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('文档加载失败:', error);
+                document.getElementById('unsupported-format').classList.remove('hidden');
+            }
+        }
+
+        // 加载文档内容
+        async function loadDocument() {
+            const docId = getDocumentId();
+            if (!docId) {
+                showError('文档ID不存在');
+                return;
+            }
+
+            try {
+                // 显示加载状态
+                document.getElementById('loading-state').classList.remove('hidden');
+                document.getElementById('content-container').classList.add('hidden');
+                document.getElementById('error-state').classList.add('hidden');
+                document.getElementById('preview-toolbar').classList.add('hidden');
+
+                // 从后端获取文档信息
+                const response = await fetch(`/documents/preview/${docId}`);
+                if (!response.ok) {
+                    throw new Error('文档信息获取失败');
+                }
+
+                const data = await response.json();
+                
+                // 更新文档信息
+                document.getElementById('document-title').textContent = data.title || data.fileName || '文档预览';
+                document.getElementById('file-name').textContent = data.fileName;
+                document.getElementById('file-type').textContent = data.contentType;
+                document.getElementById('file-size').textContent = formatFileSize(data.fileSize);
+                
+                // 根据文件类型加载文档内容
+                await loadDocumentByType(docId, data.fileName, data.contentType);
+                
+                // 显示内容区域
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('content-container').classList.remove('hidden');
+                
+                // 初始化下载按钮
+                document.getElementById('download-btn').addEventListener('click', () => {
+                    window.location.href = `/documents/download/${docId}`;
+                });
+                
+                // 初始化不支持格式的下载按钮
+                document.getElementById('download-unsupported-btn').addEventListener('click', () => {
+                    window.location.href = `/documents/download/${docId}`;
+                });
+                
+                // 初始化原始文件下载按钮
+                document.getElementById('download-original-btn').addEventListener('click', () => {
+                    window.location.href = `/documents/download/${docId}`;
+                });
+                
+            } catch (error) {
+                showError(error.message || '文档加载失败');
+            }
+        }
+
+        // 设置预览工具栏功能
+        function setupPreviewToolbar() {
+            // 缩放功能
+            let currentZoom = 100;
+            const zoomStep = 10;
+            
+            document.getElementById('zoom-in-btn').addEventListener('click', () => {
+                currentZoom += zoomStep;
+                applyZoom(currentZoom);
+            });
+            
+            document.getElementById('zoom-out-btn').addEventListener('click', () => {
+                if (currentZoom > zoomStep) {
+                    currentZoom -= zoomStep;
+                    applyZoom(currentZoom);
+                }
+            });
+            
+            document.getElementById('reset-zoom-btn').addEventListener('click', () => {
+                currentZoom = 100;
+                applyZoom(currentZoom);
+            });
+            
+            document.getElementById('fit-width-btn').addEventListener('click', () => {
+                fitToWidth();
+            });
+            
+            function applyZoom(zoomPercent) {
+                const contentArea = document.getElementById('content-container');
+                contentArea.style.transform = `scale(${zoomPercent / 100})`;
+                contentArea.style.transformOrigin = 'top center';
+            }
+            
+            function fitToWidth() {
+                const pdfPages = document.querySelectorAll('.pdf-page');
+                if (pdfPages.length > 0) {
+                    const containerWidth = document.getElementById('pdf-container').clientWidth;
+                    const firstPageWidth = pdfPages[0].naturalWidth;
+                    
+                    if (firstPageWidth > containerWidth) {
+                        currentZoom = (containerWidth / firstPageWidth) * 100;
+                        applyZoom(currentZoom);
+                    }
+                }
+            }
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('content-container').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('preview-toolbar').classList.add('hidden');
+        }
+
+        // 返回按钮事件处理
+        function setupBackButton() {
+            document.getElementById('back-btn').addEventListener('click', () => {
+                window.history.back();
+            });
+        }
+
+        // 重试按钮事件处理
+        function setupRetryButton() {
+            document.getElementById('retry-btn').addEventListener('click', loadDocument);
+        }
+
+        // 页面滚动时导航栏样式变化
+        function setupScrollEffects() {
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('header');
+                if (window.scrollY > 20) {
+                    header.classList.add('py-2', 'shadow');
+                    header.classList.remove('py-3', 'shadow-sm');
+                } else {
+                    header.classList.add('py-3', 'shadow-sm');
+                    header.classList.remove('py-2', 'shadow');
+                }
+            });
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDocument();
+            setupBackButton();
+            setupRetryButton();
+            setupScrollEffects();
+            setupPreviewToolbar();
+        });
+    </script>
+</body>
+</html>

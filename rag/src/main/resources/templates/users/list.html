@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 财务文档管理系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF', // 深蓝作为主色调，传达专业性和信任感
+                        secondary: '#3B82F6', // 中蓝作为次要色调
+                        accent: '#2563EB', // 强调色
+                        success: '#10B981', // 成功色
+                        warning: '#F59E0B', // 警告色
+                        danger: '#EF4444', // 危险/错误色
+                        info: '#64748B', // 信息色
+                        neutral: {
+                            100: '#F3F4F6',
+                            200: '#E5E7EB',
+                            300: '#D1D5DB',
+                            400: '#9CA3AF',
+                            500: '#6B7280',
+                            600: '#4B5563',
+                            700: '#374151',
+                            800: '#1F2937',
+                            900: '#111827'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'card': '0 2px 10px rgba(0, 0, 0, 0.05)',
+                        'card-hover': '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                        'button': '0 2px 4px rgba(30, 64, 175, 0.2)'
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .hover-scale {
+                @apply hover:scale-105 transition-transform duration-200;
+            }
+            .hover-lift {
+                @apply hover:-translate-y-1 transition-transform duration-200;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-button hover:bg-primary/90 focus:ring-2 focus:ring-primary/50 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-secondary {
+                @apply bg-white text-neutral-700 border border-gray-300 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-success {
+                @apply bg-success text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-button hover:bg-success/90 focus:ring-2 focus:ring-success/50 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-info {
+                @apply bg-info text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-button hover:bg-info/90 focus:ring-2 focus:ring-info/50 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-danger {
+                @apply bg-danger text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-button hover:bg-danger/90 focus:ring-2 focus:ring-danger/50 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-outline {
+                @apply border border-gray-300 bg-white text-neutral-700 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:outline-none active:translate-y-0.5;
+            }
+            .btn-icon {
+                @apply p-2 rounded-full transition-all duration-200 focus:ring-2 focus:outline-none;
+            }
+            .btn-icon-primary {
+                @apply bg-primary/10 text-primary hover:bg-primary/20 focus:ring-primary/50;
+            }
+            .btn-icon-success {
+                @apply bg-success/10 text-success hover:bg-success/20 focus:ring-success/50;
+            }
+            .btn-icon-info {
+                @apply bg-info/10 text-info hover:bg-info/20 focus:ring-info/50;
+            }
+            .btn-icon-danger {
+                @apply bg-danger/10 text-danger hover:bg-danger/20 focus:ring-danger/50;
+            }
+            .btn-small {
+                @apply px-3 py-1 text-sm;
+            }
+            .form-input {
+                @apply w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors duration-150;
+            }
+            .sidebar-link {
+                @apply flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200;
+            }
+            .sidebar-link-active {
+                @apply bg-primary/10 text-primary font-medium;
+            }
+            .sidebar-link-inactive {
+                @apply text-neutral-600 hover:bg-gray-100;
+            }
+            .animate-fade-in {
+                animation: fadeIn 0.4s ease-out;
+            }
+            .animate-slide-up {
+                animation: slideUp 0.3s ease-out;
+            }
+            .table-header-cell {
+                @apply px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider;
+            }
+            .table-cell {
+                @apply px-4 py-3 whitespace-nowrap text-sm text-neutral-700;
+            }
+            .alert-success {
+                @apply bg-green-50 border-l-4 border-success text-success p-4 rounded-r-lg shadow-sm;
+            }
+            .alert-danger {
+                @apply bg-red-50 border-l-4 border-danger text-danger p-4 rounded-r-lg shadow-sm;
+            }
+        }
+    </style>
+    <style>
+        /* 全局动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-neutral-800 min-h-screen flex flex-col">
+    <!-- 布局容器 -->
+    <div class="flex min-h-screen bg-gray-50">
+        <!-- 左侧导航栏 -->
+        <aside class="bg-white shadow-sm w-64 flex-shrink-0 hidden md:block transition-all duration-300 ease-in-out z-30">
+            <div class="p-4 border-b border-gray-200">
+                <a href="/dashboard" class="flex items-center space-x-3 text-primary group">
+                    <i class="fa fa-file-text-o text-2xl group-hover:scale-110 transition-transform duration-200"></i>
+                    <span class="font-bold text-lg group-hover:text-secondary transition-colors duration-200">财务文档管理系统</span>
+                </a>
+            </div>
+            <nav class="p-4">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-3">主导航</div>
+                <div class="space-y-1">
+                    <a href="/dashboard" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-dashboard mr-3 text-gray-500"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="/documents" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-folder-open mr-3 text-gray-500"></i>
+                        <span>文档管理</span>
+                    </a>
+                    <a href="/users" class="sidebar-link sidebar-link-active">
+                        <i class="fa fa-users mr-3"></i>
+                        <span>用户管理</span>
+                    </a>
+                </div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-8 mb-4 px-3">系统设置</div>
+                <div class="space-y-1">
+                    <a href="/tables" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-table mr-3 text-gray-500"></i>
+                        <span>义表管理</span>
+                    </a>
+                    <a href="/settings" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-cog mr-3 text-gray-500"></i>
+                        <span>系统设置</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区域 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部导航栏 -->
+            <header class="bg-white shadow-sm sticky top-0 z-20 transition-all duration-300">
+                <div class="max-w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <button id="mobile-menu-button" class="p-2 rounded-md text-gray-500 focus:outline-none md:hidden hover:bg-gray-100 transition-colors duration-200">
+                            <i class="fa fa-bars text-lg"></i>
+                        </button>
+                        <h1 class="ml-4 text-xl font-semibold text-gray-900 hidden md:block">用户管理</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="btn-icon relative hover:bg-gray-100 text-gray-500">
+                            <i class="fa fa-bell text-lg"></i>
+                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 focus:outline-none group-hover:opacity-90 transition-opacity duration-200">
+                                <img th:src="@{/images/avatar-placeholder.png}" alt="用户头像" class="w-9 h-9 rounded-full border-2 border-primary/20 object-cover" />
+                                <span class="text-sm font-medium text-gray-700 hidden sm:inline" th:text="${currentUser?.fullName}">管理员</span>
+                                <i class="fa fa-angle-down text-gray-500 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 transform origin-top-right scale-95 opacity-0 invisible group-hover:scale-100 group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <a href="/users/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150">
+                                    <i class="fa fa-user-o mr-2"></i>个人信息
+                                </a>
+                                <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150">
+                                    <i class="fa fa-cog mr-2"></i>系统设置
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors duration-150">
+                                    <i class="fa fa-sign-out mr-2"></i>退出登录
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 主要内容 -->
+            <main class="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+                <!-- 面包屑导航 -->
+                <div class="mb-6">
+                    <nav class="flex" aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                            <li class="inline-flex items-center">
+                                <a href="/dashboard" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">
+                                    <i class="fa fa-home mr-1"></i>首页
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <i class="fa fa-angle-right text-gray-400 mx-1"></i>
+                                    <span class="text-sm font-medium text-primary">用户管理</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                
+                <!-- 页面头部 -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                    <div class="animate-slide-up">
+                        <h1 class="text-2xl font-bold text-gray-900">用户管理</h1>
+                        <p class="mt-1 text-sm text-gray-500">管理系统用户，包括添加、编辑和删除用户</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3 animate-slide-up" style="animation-delay: 0.1s">
+                        <a href="/users/profile" class="btn-outline flex items-center gap-2">
+                            <i class="fa fa-user-o"></i>
+                            <span>我的资料</span>
+                        </a>
+                        <a href="/users/add" class="btn-primary flex items-center gap-2 hover-lift">
+                            <i class="fa fa-plus"></i>
+                            <span>添加用户</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 消息提示 -->
+                <div class="mb-6 animate-fade-in">
+                    <div th:if="${successMessage}" class="alert-success flex items-start">
+                        <i class="fa fa-check-circle mr-3 mt-0.5 text-lg"></i>
+                        <div>
+                            <strong class="font-medium">成功！</strong>
+                            <span class="block sm:inline ml-0 sm:ml-1" th:text="${successMessage}">操作已成功完成。</span>
+                        </div>
+                    </div>
+                    <div th:if="${errorMessage}" class="alert-danger flex items-start">
+                        <i class="fa fa-exclamation-circle mr-3 mt-0.5 text-lg"></i>
+                        <div>
+                            <strong class="font-medium">错误！</strong>
+                            <span class="block sm:inline ml-0 sm:ml-1" th:text="${errorMessage}">操作执行失败。</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 用户列表 -->
+                <div class="bg-white rounded-xl shadow-card overflow-hidden animate-fade-in" style="animation-delay: 0.2s">
+                    <div class="p-5 sm:p-6 border-b border-gray-200 bg-gray-50">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <h3 class="text-lg font-semibold text-gray-900">用户列表</h3>
+                            <form id="search-form" method="get" action="/users" class="relative w-full sm:w-64">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" name="keyword" id="user-search" placeholder="搜索用户..." class="form-input pl-10" th:value="${searchKeyword}">
+                                <input type="hidden" name="page" value="1">
+                                <input type="hidden" name="size" value="10">
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 border border-gray-300 data-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">ID</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">用户名</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">姓名</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">邮箱</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- 动态数据 -->
+                                <tr th:each="user : ${users}" class="border border-gray-300">
+                                    <td class="px-4 py-3 border border-gray-300" th:text="${user.id}"></td>
+                                    <td class="px-4 py-3 border border-gray-300" th:text="${user.username}"></td>
+                                    <td class="px-4 py-3 border border-gray-300" th:text="${user.fullName}"></td>
+                                    <td class="px-4 py-3 border border-gray-300" th:text="${user.email}"></td>
+                                    <td class="px-4 py-3 text-right border border-gray-300">
+                                        <a th:href="@{/users/{id}(id=${user.id})}" class="text-blue-600 hover:text-blue-800 mr-2">查看</a>
+                                        <a th:href="@{/users/edit/{id}(id=${user.id})}" class="text-green-600 hover:text-green-800 mr-2">编辑</a>
+                                        <a th:href="@{/users/delete/{id}(id=${user.id})}" class="text-red-600 hover:text-red-800">删除</a>
+                                    </td>
+                                </tr>
+                                
+                                <!-- 无数据提示 -->
+                                <tr th:if="${users == null or users.empty}">
+                                    <td colspan="5" class="px-4 py-8 text-center border border-gray-300">
+                                        <p>暂无用户数据</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- 分页控件 -->
+                    <div id="pagination-container" class="px-6 py-4 border-t border-gray-200 sm:px-6 flex items-center justify-between">
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div id="pagination-info">
+                                <p class="text-sm text-gray-700">
+                                    显示第 <span class="font-medium" th:text="${(currentPage - 1) * pageSize + 1}"></span> 至 
+                                    <span class="font-medium" th:text="${currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize}"></span> 条，共 
+                                    <span class="font-medium" th:text="${totalItems}"></span> 条结果
+                                </p>
+                            </div>
+                            <div>
+                                <nav id="pagination-nav" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <!-- 上一页按钮 -->
+                                    <a th:href="@{/users(page=${currentPage - 1}, size=${pageSize}, keyword=${searchKeyword})}" 
+                                       th:class="|relative inline-flex items-center px-2 py-2 rounded-l-md border ${currentPage > 1 && totalPages > 0 ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed'} text-sm font-medium transition-colors duration-150|" 
+                                       th:attr="aria-disabled=${currentPage <= 1 || totalPages == 0}" 
+                                       th:onclick="${currentPage <= 1 || totalPages == 0} ? 'return false;' : ''">
+                                        <i class="fa fa-angle-left"></i>
+                                    </a>
+                                    
+                                    <!-- 页码按钮 -->
+                                    <th:block th:if="${totalPages > 0}">
+                                        <th:block th:each="i : ${#numbers.sequence(1, totalPages)}">
+                                            <!-- 只显示当前页、首页、末页以及前后各2页 -->
+                                            <th:block th:if="${i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2)}">
+                                                <a th:href="@{/users(page=${i}, size=${pageSize}, keyword=${searchKeyword})}" 
+                                                   th:class="|relative inline-flex items-center px-4 py-2 border ${i == currentPage ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'} text-sm font-medium transition-colors duration-150|"
+                                                   th:text="${i}">
+                                                </a>
+                                            </th:block>
+                                            <!-- 显示省略号 -->
+                                            <th:block th:if="${i == currentPage - 3 && currentPage > 4}">
+                                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                                            </th:block>
+                                            <th:block th:if="${i == currentPage + 3 && currentPage < totalPages - 3}">
+                                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                                            </th:block>
+                                        </th:block>
+                                    </th:block>
+                                    
+                                    <!-- 下一页按钮 -->
+                                    <a th:href="@{/users(page=${currentPage + 1}, size=${pageSize}, keyword=${searchKeyword})}" 
+                                       th:class="|relative inline-flex items-center px-2 py-2 rounded-r-md border ${currentPage < totalPages && totalPages > 0 ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed'} text-sm font-medium transition-colors duration-150|" 
+                                       th:attr="aria-disabled=${currentPage >= totalPages || totalPages == 0}" 
+                                       th:onclick="${currentPage >= totalPages || totalPages == 0} ? 'return false;' : ''">
+                                        <i class="fa fa-angle-right"></i>
+                                    </a>
+                                </nav>
+                            </div>
+                        </div>
+                        <!-- 移动端分页信息 -->
+                        <div class="block sm:hidden">
+                            <a href="#" class="btn-secondary w-full">
+                                查看更多
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <!-- 页脚 -->
+            <footer class="bg-white border-t border-gray-200 py-4 px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-3 md:mb-0">
+                        <p class="text-sm text-gray-500">© 2024 财务文档管理系统 - 版权所有</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="/about" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">关于我们</a>
+                        <a href="/help" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">帮助中心</a>
+                        <a href="/contact" class="text-sm text-gray-500 hover:text-primary transition-colors duration-150">联系我们</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- 移动端侧边栏 -->
+    <div id="mobile-sidebar" class="fixed inset-0 z-50 bg-black bg-opacity-50 transform transition-transform duration-300 translate-x-full">
+        <div class="bg-white h-full w-64 flex-shrink-0 shadow-xl transform transition-transform duration-300 translate-x-full" id="mobile-sidebar-content">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3 text-primary">
+                    <i class="fa fa-file-text-o text-xl"></i>
+                    <span class="font-bold text-lg">财务文档管理系统</span>
+                </div>
+                <button id="close-mobile-menu" class="p-2 rounded-md text-gray-500 focus:outline-none hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fa fa-times text-lg"></i>
+                </button>
+            </div>
+            <!-- 移动端导航菜单 - 与桌面版相同 -->
+            <nav class="p-4">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-3">主导航</div>
+                <div class="space-y-1">
+                    <a href="/dashboard" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-dashboard mr-3 text-gray-500"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="/documents" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-folder-open mr-3 text-gray-500"></i>
+                        <span>文档管理</span>
+                    </a>
+                    <a href="/users" class="sidebar-link sidebar-link-active">
+                        <i class="fa fa-users mr-3"></i>
+                        <span>用户管理</span>
+                    </a>
+                </div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-8 mb-4 px-3">系统设置</div>
+                <div class="space-y-1">
+                    <a href="/tables" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-table mr-3 text-gray-500"></i>
+                        <span>义表管理</span>
+                    </a>
+                    <a href="/settings" class="sidebar-link sidebar-link-inactive">
+                        <i class="fa fa-cog mr-3 text-gray-500"></i>
+                        <span>系统设置</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // 确保DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 用户搜索功能 - Ajax局部刷新
+            const searchInput = document.getElementById('user-search');
+            const searchForm = document.getElementById('search-form');
+            const usersTableBody = document.getElementById('users-table-body');
+            const paginationInfo = document.getElementById('pagination-info');
+            const paginationNav = document.getElementById('pagination-nav');
+            
+            // 加载遮罩层
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50 hidden';
+            loadingOverlay.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-lg flex items-center"><i class="fa fa-circle-o-notch fa-spin mr-2"></i> 加载中...</div>';
+            document.body.appendChild(loadingOverlay);
+            
+            // 显示加载遮罩
+            function showLoading() {
+                loadingOverlay.classList.remove('hidden');
+            }
+            
+            // 隐藏加载遮罩
+            function hideLoading() {
+                loadingOverlay.classList.add('hidden');
+            }
+            
+            // 更新用户列表
+            function updateUsersList(data) {
+                // 清空表格
+                usersTableBody.innerHTML = '';
+                
+                if (data.users && data.users.length > 0) {
+                    // 添加用户行
+                    data.users.forEach(user => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'border border-gray-300';
+                        tr.innerHTML = `
+                            <td class="px-4 py-3 border border-gray-300">${user.id}</td>
+                            <td class="px-4 py-3 border border-gray-300">${user.username}</td>
+                            <td class="px-4 py-3 border border-gray-300">${user.fullName}</td>
+                            <td class="px-4 py-3 border border-gray-300">${user.email}</td>
+                            <td class="px-4 py-3 text-right border border-gray-300">
+                                <a href="/users/${user.id}" class="text-blue-600 hover:text-blue-800 mr-2">查看</a>
+                                <a href="/users/edit/${user.id}" class="text-green-600 hover:text-green-800 mr-2">编辑</a>
+                                <a href="/users/delete/${user.id}" class="text-red-600 hover:text-red-800">删除</a>
+                            </td>
+                        `;
+                        usersTableBody.appendChild(tr);
+                    });
+                } else {
+                    // 无数据提示
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td colspan="5" class="px-4 py-8 text-center border border-gray-300">
+                            <p>暂无用户数据</p>
+                        </td>
+                    `;
+                    usersTableBody.appendChild(tr);
+                }
+            }
+            
+            // 更新分页信息
+            function updatePagination(data) {
+                const startItem = (data.currentPage - 1) * data.pageSize + 1;
+                const endItem = Math.min(data.currentPage * data.pageSize, data.totalItems);
+                
+                // 更新分页信息文本
+                paginationInfo.innerHTML = `
+                    <p class="text-sm text-gray-700">
+                        显示第 <span class="font-medium">${startItem}</span> 至 
+                        <span class="font-medium">${endItem}</span> 条，共 
+                        <span class="font-medium">${data.totalItems}</span> 条结果
+                    </p>
+                `;
+                
+                // 构建新的分页导航
+                const newPagination = document.createElement('nav');
+                newPagination.id = 'pagination-nav'; // 确保新元素有相同的ID
+                newPagination.className = 'relative z-0 inline-flex rounded-md shadow-sm -space-x-px';
+                newPagination.setAttribute('aria-label', 'Pagination');
+                
+                // 上一页按钮
+                const hasPrev = data.currentPage > 1 && data.totalPages > 0;
+                const prevPage = hasPrev ? data.currentPage - 1 : data.currentPage;
+                newPagination.innerHTML = `
+                    <a href="javascript:void(0)" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border ${hasPrev ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed'} text-sm font-medium transition-colors duration-150" 
+                       aria-disabled="${!hasPrev}" 
+                       onclick="${hasPrev ? `loadUsersPage(${prevPage})` : 'return false;'}">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                `;
+                
+                // 页码按钮
+                if (data.totalPages > 0) {
+                    for (let i = 1; i <= data.totalPages; i++) {
+                        // 只显示当前页、首页、末页以及前后各2页
+                        if (i === 1 || i === data.totalPages || (i >= data.currentPage - 2 && i <= data.currentPage + 2)) {
+                            newPagination.innerHTML += `
+                                <a href="javascript:void(0)" 
+                                   class="relative inline-flex items-center px-4 py-2 border ${i === data.currentPage ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'} text-sm font-medium transition-colors duration-150"
+                                   onclick="loadUsersPage(${i})">
+                                    ${i}
+                                </a>
+                            `;
+                        } else if (i === data.currentPage - 3 && data.currentPage > 4) {
+                            newPagination.innerHTML += `
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            `;
+                        } else if (i === data.currentPage + 3 && data.currentPage < data.totalPages - 3) {
+                            newPagination.innerHTML += `
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            `;
+                        }
+                    }
+                }
+                
+                // 下一页按钮
+                const hasNext = data.currentPage < data.totalPages && data.totalPages > 0;
+                const nextPage = hasNext ? data.currentPage + 1 : data.currentPage;
+                newPagination.innerHTML += `
+                    <a href="javascript:void(0)" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border ${hasNext ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed'} text-sm font-medium transition-colors duration-150" 
+                       aria-disabled="${!hasNext}" 
+                       onclick="${hasNext ? `loadUsersPage(${nextPage})` : 'return false;'}">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                `;
+                
+                // 安全地替换分页导航
+                if (paginationNav && paginationNav.parentNode) {
+                    paginationNav.parentNode.replaceChild(newPagination, paginationNav);
+                    // 不再尝试更新paginationNav引用，因为它可能是const声明的
+                }
+            }
+            
+            // 加载用户数据
+            function loadUsers(page = 1) {
+                const keyword = searchInput.value.trim();
+                const pageSize = searchForm.querySelector('input[name="size"]').value;
+                
+                showLoading();
+                
+                // 发送Ajax请求
+                fetch(`/users/data?page=${page}&size=${pageSize}&keyword=${encodeURIComponent(keyword)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应异常: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateUsersList(data);
+                        updatePagination(data);
+                        hideLoading();
+                    })
+                    .catch(error => {
+                        console.error('加载用户数据失败:', error);
+                        // 显示错误提示
+                        usersTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center border border-gray-300 text-red-500">
+                                    <p>数据加载失败，请稍后重试</p>
+                                </td>
+                            </tr>
+                        `;
+                        hideLoading();
+                    });
+            }
+            
+            // 全局函数，用于分页按钮调用
+            window.loadUsersPage = function(page) {
+                loadUsers(page);
+            };
+            
+            // 初始化搜索功能
+            if (searchInput && searchForm) {
+                // 阻止表单默认提交
+                searchForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    loadUsers(1); // 从第一页开始搜索
+                });
+                
+                // 监听输入事件，自动搜索（添加防抖）
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(function() {
+                        loadUsers(1); // 从第一页开始搜索
+                    }, 500); // 500ms防抖
+                });
+                
+                // 页面加载时自动执行一次，初始化数据
+                loadUsers(1);
+            }
+        });
+        
+        // 响应式设计 - 侧边栏切换
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenuButton = document.getElementById('close-mobile-menu');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileSidebarContent = document.getElementById('mobile-sidebar-content');
+        
+        if (mobileMenuButton && closeMobileMenuButton && mobileSidebar && mobileSidebarContent) {
+            mobileMenuButton.addEventListener('click', function() {
+                mobileSidebar.classList.remove('translate-x-full');
+                setTimeout(() => {
+                    mobileSidebarContent.classList.remove('translate-x-full');
+                }, 10);
+                document.body.classList.add('overflow-hidden');
+            });
+            
+            closeMobileMenuButton.addEventListener('click', function() {
+                mobileSidebarContent.classList.add('translate-x-full');
+                setTimeout(() => {
+                    mobileSidebar.classList.add('translate-x-full');
+                }, 300);
+                document.body.classList.remove('overflow-hidden');
+            });
+            
+            // 点击遮罩层关闭侧边栏
+            mobileSidebar.addEventListener('click', function(e) {
+                if (e.target === mobileSidebar) {
+                    closeMobileMenuButton.click();
+                }
+            });
+        }
+        
+        function handleResize() {
+            // 在大屏模式下关闭移动侧边栏
+            if (window.innerWidth > 768 && mobileSidebar && !mobileSidebar.classList.contains('translate-x-full')) {
+                closeMobileMenuButton.click();
+            }
+        }
+        
+        // 初始化时执行一次
+        handleResize();
+        // 监听窗口大小变化
+        window.addEventListener('resize', handleResize);
+        
+        // 页面滚动效果 - 导航栏阴影变化
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-md');
+                header.classList.remove('shadow-sm');
+            } else {
+                header.classList.add('shadow-sm');
+                header.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body>
+</html>

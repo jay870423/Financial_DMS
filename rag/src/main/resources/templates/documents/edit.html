@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑文档 - 财务文档管理系统</title>
+    <!-- 使用CDN加载Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 使用CDN加载Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 配置Tailwind自定义颜色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#4080FF',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C',
+                        dark: '#1D2129',
+                        light: '#F2F3F5'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-card {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+            .transition-smooth {
+                transition: all 0.3s ease;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <a href="/dashboard" class="flex items-center text-primary font-medium">
+                    <i class="fa fa-file-text-o text-2xl mr-2"></i>
+                    <span>财务文档管理系统</span>
+                </a>
+                
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/dashboard" class="text-gray-600 hover:text-primary transition-smooth">仪表盘</a>
+                    <a href="/documents" class="text-gray-600 hover:text-primary transition-smooth">文档管理</a>
+                </nav>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center cursor-pointer hover:bg-gray-100 px-2 py-1 rounded-full transition-smooth">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                        <i class="fa fa-user text-gray-500"></i>
+                    </div>
+                    <span class="text-sm font-medium">管理员</span>
+                </div>
+                
+                <a href="/logout" class="text-gray-600 hover:text-danger transition-smooth flex items-center">
+                    <i class="fa fa-sign-out mr-1"></i>
+                    <span class="text-sm">退出</span>
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 主内容区域 -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- 页面标题 -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-gray-800">编辑文档</h1>
+                <p class="text-gray-500">修改文档的详细信息</p>
+            </div>
+            <!-- 查看文档按钮已移除 -->
+        </div>
+        
+        <!-- 编辑表单 -->
+        <div class="bg-white rounded-xl shadow-card p-6 mb-6">
+            <!-- 错误消息显示 -->
+            <div th:if="${errorMessage}" class="mb-4 p-3 bg-red-50 text-danger rounded-lg border border-red-100">
+                <i class="fa fa-exclamation-circle mr-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+            
+            <!-- 成功消息显示 -->
+            <div th:if="${successMessage}" class="mb-4 p-3 bg-green-50 text-success rounded-lg border border-green-100">
+                <i class="fa fa-check-circle mr-2"></i>
+                <span th:text="${successMessage}"></span>
+            </div>
+            
+            <form th:action="@{/documents/{id}/edit(id=${document != null ? document.id : ''})}" method="post" onsubmit="return validateForm()" id="edit-form">
+                <!-- 文档信息表单 -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">文档信息</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">文档标题 <span class="text-danger">*</span></label>
+                            <input type="text" id="title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-smooth" placeholder="请输入文档标题" required th:value="${document != null ? document.title : ''}">
+                        </div>
+                        
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-1">文档类别 <span class="text-danger">*</span></label>
+                            <select id="category" name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-smooth" required>
+                                <option value="">请选择文档类别</option>
+                                <option value="invoice">发票</option>
+                                <option value="contract">合同</option>
+                                <option value="report">报表</option>
+                                <option value="receipt">收据</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-gray-700 mb-1">文档日期 <span class="text-danger">*</span></label>
+                            <input type="date" id="date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-smooth" required th:value="${document != null ? #temporals.format(document.createdAt, 'yyyy-MM-dd') : ''}">
+                        </div>
+                        
+                        <div>
+                            <label for="department" class="block text-sm font-medium text-gray-700 mb-1">所属部门</label>
+                            <select id="department" name="department" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-smooth">
+                                <option value="">请选择部门</option>
+                                <option value="finance">财务部</option>
+                                <option value="hr">人力资源部</option>
+                                <option value="operation">运营部</option>
+                                <option value="marketing">市场部</option>
+                                <option value="other">其他部门</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">文档描述</label>
+                        <textarea id="description" name="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-smooth" placeholder="请输入文档描述（选填）" th:text="${document != null ? document.description : ''}"></textarea>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label for="tags" class="block text-sm font-medium text-gray-700 mb-1">标签</label>
+                        <input type="text" id="tags" name="tags" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-smooth" placeholder="请输入标签，多个标签用逗号分隔" th:value="${document != null and document.tags != null ? document.tags : ''}">
+                        <p class="text-xs text-gray-500 mt-1">标签有助于您更快地搜索和分类文档</p>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">访问权限 <span class="text-danger">*</span></label>
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                    <input type="radio" name="accessLevel" value="public" class="h-4 w-4 text-primary focus:ring-primary">
+                                    <span class="ml-2 text-gray-700">公开 (所有用户可见)</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="accessLevel" value="private" class="h-4 w-4 text-primary focus:ring-primary">
+                                    <span class="ml-2 text-gray-700">私有 (仅自己可见)</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="accessLevel" value="department" class="h-4 w-4 text-primary focus:ring-primary">
+                                    <span class="ml-2 text-gray-700">部门可见 (同部门用户可见)</span>
+                                </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">文件信息</h3>
+                    <p class="text-sm text-gray-500 mb-4">如需更改文件内容，请重新上传文件</p>
+                    
+                    <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                            <div class="w-14 h-14 flex-shrink-0 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fa fa-file-text-o text-primary text-2xl"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <h4 class="font-medium text-gray-800 truncate" th:text="${document != null and document.fileName != null ? document.fileName : '文件名'}">文件名</h4>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <span th:text="${document != null and document.fileSize != null and document.fileSize > 0 ? (
+    document.fileSize < 1024 ? (document.fileSize + ' B') :
+    document.fileSize < 1048576 ? (#numbers.formatDecimal(document.fileSize / 1024, 1, 2) + ' KB') :
+    (#numbers.formatDecimal(document.fileSize / 1048576, 1, 2) + ' MB')
+) : '未知'}">文件大小</span>
+                                    <span class="mx-2">•</span>
+                                    <span>上传于：</span>
+                                    <span th:text="${document != null ? #temporals.format(document.createdAt, 'yyyy-MM-dd HH:mm:ss') : '2024-01-15 10:30:00'}">2024-01-15 10:30:00</span>
+                                </p>
+                                <div class="mt-2 flex space-x-3">
+                                    <a th:href="@{/documents/download/{id}(id=${document != null ? document.id : ''})}" class="inline-flex items-center px-3 py-1 text-sm border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-smooth">
+                                        <i class="fa fa-download mr-1"></i>
+                                        下载文件
+                                    </a>
+                                    <button type="button" class="inline-flex items-center px-3 py-1 text-sm bg-danger text-white rounded-lg hover:bg-danger/90 transition-smooth" onclick="return confirm('确定要删除此文档吗？此操作不可撤销。')">
+                                        <i class="fa fa-trash mr-1"></i>
+                                        删除文档
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-4">
+                    <button type="button" class="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-smooth" onclick="window.history.back()">
+                            取消
+                        </button>
+                    <button type="submit" class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-smooth flex items-center" id="save-button">
+                        <i class="fa fa-save mr-2"></i>
+                        保存更改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-4 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© 2024 财务文档管理系统 - 文档编辑功能</p>
+        </div>
+    </footer>
+    
+    <!-- 引入MutationObserver修复脚本 -->
+    <script th:src="@{/fix-mutation-observer.js}"></script>
+    <!-- 引入测试脚本 -->
+    <script th:src="@{/test-mutation-observer.js}"></script>
+    
+    <script>
+        // 定义在全局作用域的验证函数，以便被多个地方调用
+        function validateField(field) {
+            const errorMessageId = field.id + '-error';
+            let existingError = document.getElementById(errorMessageId);
+            
+            if (field.required && !field.value.trim()) {
+                if (!existingError) {
+                    existingError = document.createElement('div');
+                    existingError.id = errorMessageId;
+                    existingError.className = 'text-danger text-xs mt-1';
+                    existingError.textContent = '此字段为必填项';
+                    field.parentNode.appendChild(existingError);
+                }
+                field.classList.add('border-danger');
+                return false;
+            } else {
+                if (existingError) {
+                    existingError.remove();
+                }
+                field.classList.remove('border-danger');
+                return true;
+            }
+        }
+        
+        // 表单验证和交互优化
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('edit-form');
+            const saveButton = document.getElementById('save-button');
+            
+            // 为必填字段添加实时验证反馈
+            const requiredFields = ['title', 'category', 'date'];
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                field.addEventListener('blur', function() {
+                    validateField(this);
+                });
+            });
+        });
+        
+        // 表单验证
+        function validateForm() {
+            // 清除之前的验证错误
+            const errorElements = document.querySelectorAll('[id$="-error"]');
+            errorElements.forEach(el => el.remove());
+            
+            // 验证所有必填字段
+            const titleValid = validateField(document.getElementById('title'));
+            const categoryValid = validateField(document.getElementById('category'));
+            const dateValid = validateField(document.getElementById('date'));
+            
+            if (!titleValid || !categoryValid || !dateValid) {
+                return false;
+            }
+            
+            // 禁用保存按钮防止重复提交
+            const saveButton = document.getElementById('save-button');
+            const originalContent = saveButton.innerHTML;
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 保存中...';
+            
+            // 设置一个超时，确保即使在快速响应的情况下也能看到加载状态
+            const form = document.getElementById('edit-form');
+            setTimeout(() => {
+                form.submit();
+            }, 300);
+            
+            return false; // 防止立即提交，让setTimeout来处理
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑用户 - 财务文档管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'dropdown': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .sidebar-link {
+                @apply flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg transition-all duration-200 hover:bg-primary/5 hover:text-primary;
+            }
+            .sidebar-link.active {
+                @apply bg-primary/10 text-primary font-medium;
+            }
+            .btn {
+                @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+            }
+            .btn-primary {
+                @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary/50;
+            }
+            .btn-outline {
+                @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500/50;
+            }
+            .form-label {
+                @apply block text-sm font-medium text-gray-700 mb-1;
+            }
+            .form-control {
+                @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary focus:border-primary transition-all duration-200;
+            }
+            .form-hint {
+                @apply text-xs text-gray-500 mt-1;
+            }
+            .alert {
+                @apply px-4 py-3 rounded-lg mb-4 text-sm;
+            }
+            .alert-danger {
+                @apply bg-danger/10 text-danger border border-danger/20;
+            }
+            .loading-spinner {
+                @apply w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block;
+            }
+            .required::after {
+                content: ' *';
+                @apply text-danger;
+            }
+            .switch {
+                @apply relative inline-block w-12 h-6;
+            }
+            .switch input {
+                @apply opacity-0 w-0 h-0;
+            }
+            .slider {
+                @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-all duration-200 before:absolute before:content-[''] before:h-5 before:w-5 before:left-0.5 before:bottom-0.5 before:bg-white before:rounded-full before:transition-all before:duration-200 before:shadow;
+            }
+            input:checked + .slider {
+                @apply bg-primary;
+            }
+            input:checked + .slider:before {
+                @apply transform translate-x-6;
+            }
+        }
+    </style>
+    <script>
+        // 预先定义validateForm函数，避免未定义错误
+        function validateForm() {
+            // 临时返回true，确保表单可以提交
+            return true;
+        }
+    </script>
+</head>
+<body class="font-inter bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <!-- 移动端菜单按钮 -->
+                    <button type="button" class="lg:hidden mr-2 text-gray-600 hover:text-primary" id="mobile-menu-button">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                    <a href="/dashboard" class="flex items-center gap-2 text-primary">
+                        <i class="fa fa-file-text-o text-xl"></i>
+                        <span class="font-semibold">财务文档管理系统</span>
+                    </a>
+                </div>
+                
+                <nav class="hidden lg:flex items-center gap-1 ml-10">
+                    <a href="/dashboard" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-primary/5 hover:text-primary transition-colors">仪表盘</a>
+                    <a href="/documents" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-primary/5 hover:text-primary transition-colors">文档管理</a>
+                    <a href="/users" class="px-3 py-2 rounded-md text-sm font-medium bg-primary/10 text-primary transition-colors">用户管理</a>
+                </nav>
+                
+                <div class="flex items-center gap-4">
+                    <!-- 用户信息下拉菜单 -->
+                    <div class="relative" id="user-dropdown-container">
+                        <button type="button" class="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors" id="user-dropdown-button">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                <i class="fa fa-user"></i>
+                            </div>
+                            <span class="hidden md:block text-sm font-medium" th:text="${currentUser?.fullName}"></span>
+                            <i class="fa fa-caret-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-dropdown py-1 opacity-0 invisible transition-all duration-200 transform translate-y-2" id="user-dropdown-menu">
+                            <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">个人资料</a>
+                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">系统设置</a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="/logout" class="block px-4 py-2 text-sm text-danger hover:bg-danger/5">退出登录</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <div class="flex-1 flex">
+        <!-- 移动端侧边栏 -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <a href="/dashboard" class="flex items-center gap-2 text-primary">
+                        <i class="fa fa-file-text-o"></i>
+                        <span class="font-semibold">系统菜单</span>
+                    </a>
+                    <button type="button" class="text-gray-600 hover:text-primary" id="close-mobile-menu">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <nav class="p-4">
+                <a href="/dashboard" class="sidebar-link">
+                    <i class="fa fa-tachometer"></i>
+                    <span>仪表盘</span>
+                </a>
+                <a href="/documents" class="sidebar-link">
+                    <i class="fa fa-folder"></i>
+                    <span>文档管理</span>
+                </a>
+                <a href="/users" class="sidebar-link active">
+                    <i class="fa fa-users"></i>
+                    <span>用户管理</span>
+                </a>
+                <a href="/settings" class="sidebar-link">
+                    <i class="fa fa-cog"></i>
+                    <span>系统设置</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- 遮罩层 -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 opacity-0 invisible transition-opacity duration-300"></div>
+        
+        <!-- 主内容 -->
+        <main class="flex-1 p-4 md:p-6">
+            <!-- 页面标题 -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-gray-800">编辑用户</h1>
+                    <p class="text-gray-600 mt-1">修改用户信息和权限</p>
+                </div>
+                <div>
+                    <a th:href="@{/users/{id}(id=${user?.id})}" class="btn btn-outline">
+                        <i class="fa fa-arrow-left"></i>
+                        返回用户详情
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 用户编辑表单 -->
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-card p-6 transition-shadow hover:shadow-card-hover">
+                    <!-- 错误消息显示 -->
+                    <div th:if="${errorMessage}" class="alert alert-danger">
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        <span th:text="${errorMessage}"></span>
+                    </div>
+                    
+                    <form th:action="@{/users/edit/{id}(id=${user?.id})}" method="post" onsubmit="return validateForm()" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="fullName" class="form-label">姓名 <span class="required"></span></label>
+                                <input type="text" id="fullName" name="fullName" class="form-control" placeholder="请输入用户姓名" required th:value="${user?.fullName}">
+                            </div>
+                            
+                            <div>
+                                <label for="username" class="form-label">用户名 <span class="required"></span></label>
+                                <input type="text" id="username" name="username" class="form-control" placeholder="请输入用户名" required th:value="${user?.username}">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="email" class="form-label">邮箱 <span class="required"></span></label>
+                                <input type="email" id="email" name="email" class="form-control" placeholder="请输入邮箱地址" required th:value="${user?.email}">
+                            </div>
+                            <div>
+                                <label for="department" class="form-label">部门</label>
+                                <select id="department" name="department" class="form-control">
+                                    <option value="" th:selected="${user?.department == null or user?.department == ''}">请选择部门</option>
+                                    <option th:each="dept : ${departments}" th:value="${dept}" th:text="${dept}" th:selected="${user?.department == dept}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="role" class="form-label">角色 <span class="required"></span></label>
+                            <select id="role" name="role" class="form-control" required>
+                                <option value="">请选择角色</option>
+                                <option value="ADMIN" th:selected="${user?.role == 'ADMIN'}">管理员</option>
+                                <option value="USER" th:selected="${user?.role == 'USER'}">普通用户</option>
+                            </select>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-medium text-gray-700">更改密码</h4>
+                                <label class="switch">
+                                    <input type="checkbox" id="change-password-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="password-fields hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="password" class="form-label">新密码</label>
+                                        <input type="password" id="password" name="password" class="form-control" placeholder="请输入新密码">
+                                        <div class="password-strength mt-3" id="password-strength">
+                                            <div class="flex gap-1 mb-1">
+                                                <div class="strength-bar flex-1 h-1 rounded-full bg-gray-200" id="strength-bar-1"></div>
+                                                <div class="strength-bar flex-1 h-1 rounded-full bg-gray-200" id="strength-bar-2"></div>
+                                                <div class="strength-bar flex-1 h-1 rounded-full bg-gray-200" id="strength-bar-3"></div>
+                                                <div class="strength-bar flex-1 h-1 rounded-full bg-gray-200" id="strength-bar-4"></div>
+                                            </div>
+                                            <span class="strength-text text-xs text-gray-500" id="strength-text">密码强度: 未输入</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="confirm-password" class="form-label">确认新密码</label>
+                                        <input type="password" id="confirm-password" name="confirm-password" class="form-control" placeholder="请再次输入新密码">
+                                        <p id="password-match" class="form-hint"></p>
+                                    </div>
+                                </div>
+                                <p class="form-hint mt-3">留空表示不更改密码</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button type="button" class="btn btn-outline" th:onclick="|window.location.href='/users/${user?.id}'|">取消</button>
+                            <button type="submit" class="btn btn-primary" id="submit-button">
+                                <i class="fa fa-save"></i>
+                                保存更改
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-4 mt-auto">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+                <div class="text-center md:text-left">
+                    <p class="text-sm text-gray-600">&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+                </div>
+                <div class="flex gap-4">
+                    <a href="/about" class="text-sm text-gray-600 hover:text-primary transition-colors">关于系统</a>
+                    <a href="/help" class="text-sm text-gray-600 hover:text-primary transition-colors">帮助中心</a>
+                    <a href="#" class="text-sm text-gray-600 hover:text-primary transition-colors">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // 移动端侧边栏功能
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenu = document.getElementById('close-mobile-menu');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        
+        function toggleMobileMenu() {
+            mobileSidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('opacity-0');
+            sidebarOverlay.classList.toggle('invisible');
+            document.body.classList.toggle('overflow-hidden');
+        }
+        
+        mobileMenuButton.addEventListener('click', toggleMobileMenu);
+        closeMobileMenu.addEventListener('click', toggleMobileMenu);
+        sidebarOverlay.addEventListener('click', toggleMobileMenu);
+        
+        // 用户下拉菜单功能
+        const userDropdownButton = document.getElementById('user-dropdown-button');
+        const userDropdownMenu = document.getElementById('user-dropdown-menu');
+        
+        userDropdownButton.addEventListener('click', () => {
+            userDropdownMenu.classList.toggle('opacity-0');
+            userDropdownMenu.classList.toggle('invisible');
+            userDropdownMenu.classList.toggle('translate-y-2');
+        });
+        
+        // 点击其他区域关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            if (!userDropdownButton.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                userDropdownMenu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+            }
+        });
+        
+        // 更改密码切换
+        const changePasswordToggle = document.getElementById('change-password-toggle');
+        const passwordFields = document.querySelector('.password-fields');
+        
+        changePasswordToggle.addEventListener('change', function() {
+            passwordFields.classList.toggle('hidden');
+            if (!this.checked) {
+                document.getElementById('password').value = '';
+                document.getElementById('confirm-password').value = '';
+                resetPasswordStrength();
+                document.getElementById('password-match').textContent = '';
+            }
+        });
+        
+        // 密码强度检测
+        const passwordInput = document.getElementById('password');
+        const strengthBars = [
+            document.getElementById('strength-bar-1'),
+            document.getElementById('strength-bar-2'),
+            document.getElementById('strength-bar-3'),
+            document.getElementById('strength-bar-4')
+        ];
+        const strengthText = document.getElementById('strength-text');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const strength = calculatePasswordStrength(password);
+            
+            // 重置所有强度条
+            strengthBars.forEach(bar => {
+                bar.className = 'strength-bar flex-1 h-1 rounded-full bg-gray-200';
+            });
+            
+            // 设置强度条颜色
+            for (let i = 0; i < strength; i++) {
+                if (strength === 1) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-danger';
+                } else if (strength === 2) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-warning';
+                } else if (strength === 3) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-info';
+                } else if (strength >= 4) {
+                    strengthBars[i].className = 'strength-bar flex-1 h-1 rounded-full bg-success';
+                }
+            }
+            
+            // 设置强度文本
+            if (password === '') {
+                strengthText.textContent = '密码强度: 未输入';
+                strengthText.className = 'strength-text text-xs text-gray-500';
+            } else if (strength === 1) {
+                strengthText.textContent = '密码强度: 弱';
+                strengthText.className = 'strength-text text-xs text-danger';
+            } else if (strength === 2) {
+                strengthText.textContent = '密码强度: 一般';
+                strengthText.className = 'strength-text text-xs text-warning';
+            } else if (strength === 3) {
+                strengthText.textContent = '密码强度: 良好';
+                strengthText.className = 'strength-text text-xs text-info';
+            } else if (strength >= 4) {
+                strengthText.textContent = '密码强度: 强';
+                strengthText.className = 'strength-text text-xs text-success';
+            }
+            
+            // 检查密码是否匹配
+            checkPasswordMatch();
+        });
+        
+        // 确认密码匹配检查
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const passwordMatchText = document.getElementById('password-match');
+        
+        confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+        
+        function checkPasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword === '') {
+                passwordMatchText.textContent = '';
+                passwordMatchText.className = 'form-hint';
+            } else if (password === confirmPassword) {
+                passwordMatchText.textContent = '密码匹配';
+                passwordMatchText.className = 'form-hint text-success';
+            } else {
+                passwordMatchText.textContent = '密码不匹配';
+                passwordMatchText.className = 'form-hint text-danger';
+            }
+        }
+        
+        // 重置密码强度显示
+        function resetPasswordStrength() {
+            strengthBars.forEach(bar => {
+                bar.className = 'strength-bar flex-1 h-1 rounded-full bg-gray-200';
+            });
+            strengthText.textContent = '密码强度: 未输入';
+            strengthText.className = 'strength-text text-xs text-gray-500';
+        }
+        
+        // 计算密码强度
+        function calculatePasswordStrength(password) {
+            let strength = 0;
+            
+            // 长度检查
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // 包含小写字母
+            if (/[a-z]/.test(password)) strength++;
+            
+            // 包含大写字母
+            if (/[A-Z]/.test(password)) strength++;
+            
+            // 包含数字
+            if (/[0-9]/.test(password)) strength++;
+            
+            // 包含特殊字符
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            return Math.min(4, Math.floor(strength / 1.5));
+        }
+        
+        // 表单验证
+        function validateForm() {
+            if (changePasswordToggle.checked) {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                if (password) {
+                    // 密码强度检查
+                    if (calculatePasswordStrength(password) < 2) {
+                        alert('密码强度过弱，请使用更复杂的密码');
+                        passwordInput.focus();
+                        return false;
+                    }
+                    
+                    // 密码匹配检查
+                    if (password !== confirmPassword) {
+                        alert('两次输入的密码不一致');
+                        confirmPasswordInput.focus();
+                        return false;
+                    }
+                }
+            }
+            
+            // 禁用提交按钮防止重复提交
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="loading-spinner"></span> 提交中...';
+            
+            return true;
+        }
+    </script>
+</body>
+</html>

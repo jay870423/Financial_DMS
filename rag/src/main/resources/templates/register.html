@@ -1,0 +1,557 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 财务文档管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C',
+                        background: '#F2F3F5',
+                        surface: '#FFFFFF',
+                        text: {
+                            primary: '#1D2129',
+                            regular: '#4E5969',
+                            secondary: '#86909C',
+                            placeholder: '#C9CDD4'
+                        },
+                        border: {
+                            primary: '#E5E6EB',
+                            secondary: '#C9CDD4'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        card: '0 2px 12px 0 rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 4px 16px 0 rgba(0, 0, 0, 0.12)',
+                        dropdown: '0 6px 16px -8px rgba(0, 0, 0, 0.1), 0 9px 28px 0 rgba(0, 0, 0, 0.05)'
+                    },
+                    transitionProperty: {
+                        'height': 'height',
+                        'spacing': 'margin, padding'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .auth-input {
+                @apply w-full pr-4 py-3 border border-border-primary rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 outline-none bg-white;
+            }
+            .btn-primary {
+                @apply w-full bg-primary text-white py-3 px-6 rounded-md font-medium transition-all duration-200 hover:bg-primary/90 active:bg-primary/80 flex items-center justify-center relative overflow-hidden;
+            }
+            .form-group {
+                @apply relative transition-all duration-200 hover:scale-[1.01] focus-within:scale-[1.01];
+            }
+            
+            /* 图标垂直对齐调整 */
+            .relative i,
+            .relative svg {
+                font-size: 0.875rem;
+                vertical-align: middle;
+                margin-top: 0;
+            }
+            .register-card {
+                @apply bg-white rounded-xl shadow-card overflow-hidden transition-all duration-300 hover:shadow-card-hover;
+            }
+            .slide-in {
+                animation: slideIn 0.3s ease-out;
+            }
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            .password-strength-weak {
+                @apply bg-danger/20 text-danger;
+            }
+            .password-strength-medium {
+                @apply bg-warning/20 text-warning;
+            }
+            .password-strength-strong {
+                @apply bg-success/20 text-success;
+            }
+            .progress-shine {
+                position: relative;
+                overflow: hidden;
+            }
+            .progress-shine::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                animation: shine 2s infinite;
+            }
+            @keyframes shine {
+                100% {
+                    left: 100%;
+                }
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gradient-to-br from-background to-background/90 min-h-screen flex items-center justify-center p-4">
+    <!-- 注册容器 -->
+    <div class="w-full max-w-md mx-auto">
+        <!-- 背景装饰 -->
+        <div class="absolute -top-20 -right-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10"></div>
+        <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-primary/5 to-secondary/5 blur-3xl -z-20"></div>
+        
+        <!-- 注册卡片 -->
+        <div class="register-card">
+            <!-- 卡片头部 -->
+            <div class="p-8 relative overflow-hidden">
+                <!-- 顶部装饰 -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full"></div>
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
+                <div class="text-center mb-8 relative">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+                        <i class="fa fa-user-plus text-3xl text-primary"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-text-primary mb-2">创建新账号</h1>
+                    <p class="text-text-secondary">加入财务文档管理系统，开始管理您的文档</p>
+                </div>
+                <!-- 错误消息显示 -->
+                <div th:if="${errorMessage}" class="mb-4 bg-danger/10 text-danger px-4 py-3 rounded-md text-sm">
+                    <i class="fa fa-exclamation-circle mr-2"></i>
+                    <span th:text="${errorMessage}"></span>
+                </div>
+                
+                <!-- 成功消息显示 -->
+                <div th:if="${successMessage}" class="mb-4 bg-success/10 text-success px-4 py-3 rounded-md text-sm">
+                    <i class="fa fa-check-circle mr-2"></i>
+                    <span th:text="${successMessage}"></span>
+                </div>
+                
+                <!-- 注册表单 -->
+                <form th:action="@{/register}" method="post" class="space-y-5">
+                    <div class="form-group">
+                        <label for="fullName" class="block text-sm font-medium text-text-primary mb-1">姓名</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-text-secondary">
+                                <i class="fa fa-user-circle-o"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                id="fullName" 
+                                name="fullName" 
+                                class="auth-input pl-14"
+                                placeholder="请输入您的姓名" 
+                                required
+                            >
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="username" class="block text-sm font-medium text-text-primary mb-1">用户名</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-text-secondary">
+                                <i class="fa fa-user-o"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                class="auth-input pl-14"
+                                placeholder="请设置用户名" 
+                                required
+                            >
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="block text-sm font-medium text-text-primary mb-1">邮箱</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-text-secondary">
+                                <i class="fa fa-envelope-o"></i>
+                            </span>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="auth-input pl-14"
+                                placeholder="请输入您的邮箱" 
+                                required
+                            >
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="block text-sm font-medium text-text-primary mb-1">密码</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-text-secondary">
+                                <i class="fa fa-lock"></i>
+                            </span>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="auth-input pl-14"
+                                placeholder="请设置密码" 
+                                required
+                            >
+                            <button 
+                                type="button" 
+                                class="toggle-password absolute inset-y-0 right-0 flex items-center pr-3 text-text-secondary hover:text-text-primary transition-colors"
+                                onclick="togglePasswordVisibility(this)"
+                            >
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </div>
+                        <!-- 密码强度指示器 -->
+                         <div id="password-strength-container" class="mt-2 hidden">
+                            <div class="flex items-center justify-between mb-1">
+                                <span id="password-strength-text" class="text-xs font-medium">密码强度: 弱</span>
+                                <span id="password-strength-hint" class="text-xs text-text-secondary">请使用更复杂的密码</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-border-primary rounded-full overflow-hidden">
+                                <div id="password-strength-bar" class="h-full bg-danger transition-all duration-300 rounded-full w-1/4 progress-shine"></div>
+                            </div>
+                            <ul id="password-strength-criteria" class="mt-2 text-xs text-text-secondary space-y-1">
+                            <li class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-border-primary mr-2 flex-shrink-0 transition-colors duration-300"></span>
+                                <span class="transition-colors duration-300">至少8个字符</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-border-primary mr-2 flex-shrink-0 transition-colors duration-300"></span>
+                                <span class="transition-colors duration-300">包含大写字母</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-border-primary mr-2 flex-shrink-0 transition-colors duration-300"></span>
+                                <span class="transition-colors duration-300">包含数字</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-border-primary mr-2 flex-shrink-0 transition-colors duration-300"></span>
+                                <span class="transition-colors duration-300">包含特殊字符</span>
+                            </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword" class="block text-sm font-medium text-text-primary mb-1">确认密码</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-text-secondary">
+                                <i class="fa fa-lock"></i>
+                            </span>
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                name="confirmPassword" 
+                                class="auth-input pl-14"
+                                placeholder="请再次输入密码" 
+                                required
+                            >
+                            <button 
+                                type="button" 
+                                class="toggle-password absolute inset-y-0 right-0 flex items-center pr-3 text-text-secondary hover:text-text-primary transition-colors"
+                                onclick="togglePasswordVisibility(this)"
+                            >
+                                <i class="fa fa-eye"></i>
+                            </button>
+                            <span id="password-match-icon" class="absolute inset-y-0 right-10 flex items-center pr-3 hidden">
+                                <i class="fa fa-check text-success"></i>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start mt-4">
+                        <div class="flex items-center h-5">
+                            <input 
+                                type="checkbox" 
+                                id="agree-terms" 
+                                name="agree-terms" 
+                                class="h-4 w-4 text-primary focus:ring-primary/30 border-border-primary rounded"
+                                required
+                            >
+                        </div>
+                        <label for="agree-terms" class="ml-2 text-sm text-text-regular">
+                            我已阅读并同意<a href="#" class="text-primary hover:text-primary/80 transition-colors">用户协议</a>和<a href="#" class="text-primary hover:text-primary/80 transition-colors">隐私政策</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary mt-6 group">
+                        <i class="fa fa-user-plus mr-2 transition-transform duration-200 group-hover:translate-x-1"></i>
+                        注册
+                        <span class="ripple"></span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 登录链接 -->
+             <div class="px-8 py-6 bg-background border-t border-border-primary rounded-b-xl">
+                <div class="text-center">
+                    <span class="text-sm text-text-regular">已有账号?</span>
+                    <a th:href="@{/login}" class="text-sm text-primary font-medium hover:text-primary/80 transition-colors ml-1 inline-flex items-center">
+                        返回登录
+                        <i class="fa fa-arrow-right ml-1 text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页脚 -->
+         <div class="mt-6 text-center text-sm text-text-secondary">
+            <p>&copy; 2024 财务文档管理系统. 保留所有权利.</p>
+        </div>
+    </div>
+    <
+    <script>
+        // 切换密码可见性
+        function togglePasswordVisibility(button) {
+            const passwordInput = button.previousElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const strengthContainer = document.getElementById('password-strength-container');
+            const strengthText = document.getElementById('password-strength-text');
+            const strengthHint = document.getElementById('password-strength-hint');
+            const strengthBar = document.getElementById('password-strength-bar');
+            const strengthCriteria = document.getElementById('password-strength-criteria').querySelectorAll('li');
+            const passwordMatchIcon = document.getElementById('password-match-icon');
+            
+            // 所有输入框列表
+            const inputs = form.querySelectorAll('.auth-input');
+            
+            // 输入框聚焦效果增强
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('transition-transform');
+                });
+            });
+            
+            // 为按钮添加波纹效果
+            document.querySelectorAll('button, a[href]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    if (this.tagName === 'A' && this.href.includes('javascript:')) return;
+                    
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('absolute', 'bg-white', 'opacity-30', 'rounded-full', 'transform', 'scale-0', 'animate-ping');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // 密码强度检查
+            password.addEventListener('input', function() {
+                const value = this.value;
+                
+                // 显示/隐藏密码强度指示器
+                if (value.length > 0) {
+                    strengthContainer.classList.remove('hidden');
+                } else {
+                    strengthContainer.classList.add('hidden');
+                    return;
+                }
+                
+                // 定义密码强度规则
+                const rules = [
+                    value.length >= 8,
+                    /[A-Z]/.test(value),
+                    /[0-9]/.test(value),
+                    /[^A-Za-z0-9]/.test(value)
+                ];
+                
+                // 更新规则指示器
+                rules.forEach((isMet, index) => {
+                    const indicator = strengthCriteria[index].querySelector('span:first-child');
+                    const text = strengthCriteria[index].querySelector('span:last-child');
+                    
+                    if (isMet) {
+                        indicator.className = 'w-3 h-3 rounded-full bg-success mr-2 flex-shrink-0 transition-colors duration-300';
+                        text.className = 'text-success transition-colors duration-300';
+                    } else {
+                        indicator.className = 'w-3 h-3 rounded-full bg-border-primary mr-2 flex-shrink-0 transition-colors duration-300';
+                        text.className = 'transition-colors duration-300';
+                    }
+                });
+                
+                // 计算强度分数
+                const strength = rules.filter(Boolean).length;
+                
+                // 更新强度显示
+                let strengthClass, strengthTextContent, strengthHintContent, barWidth, barColor;
+                
+                switch (strength) {
+                    case 0:
+                    case 1:
+                        strengthClass = 'password-strength-weak';
+                        strengthTextContent = '密码强度: 弱';
+                        strengthHintContent = '请使用更复杂的密码';
+                        barWidth = 'w-1/4';
+                        barColor = 'bg-danger';
+                        break;
+                    case 2:
+                        strengthClass = 'password-strength-medium';
+                        strengthTextContent = '密码强度: 中';
+                        strengthHintContent = '再增加一些复杂性';
+                        barWidth = 'w-1/2';
+                        barColor = 'bg-warning';
+                        break;
+                    case 3:
+                    case 4:
+                        strengthClass = 'password-strength-strong';
+                        strengthTextContent = '密码强度: 强';
+                        strengthHintContent = '很好! 密码很安全';
+                        barWidth = 'w-full';
+                        barColor = 'bg-success';
+                        break;
+                }
+                
+                strengthText.textContent = strengthTextContent;
+                strengthHint.textContent = strengthHintContent;
+                strengthBar.className = `h-full ${barColor} transition-all duration-500 rounded-full ${barWidth} progress-shine`;
+                
+                // 验证密码是否匹配
+                validatePasswordMatch();
+            });
+            
+            // 确认密码验证
+            confirmPassword.addEventListener('input', validatePasswordMatch);
+            
+            function validatePasswordMatch() {
+                if (confirmPassword.value.length === 0) {
+                    passwordMatchIcon.classList.add('hidden');
+                    confirmPassword.classList.remove('border-danger', 'border-success');
+                    return;
+                }
+                
+                if (password.value === confirmPassword.value) {
+                    passwordMatchIcon.classList.remove('hidden');
+                    passwordMatchIcon.innerHTML = '\u003ci class="fa fa-check text-success"\u003e\u003c/i\u003e';
+                    confirmPassword.classList.remove('border-danger');
+                    confirmPassword.classList.add('border-success');
+                } else {
+                    passwordMatchIcon.classList.remove('hidden');
+                    passwordMatchIcon.innerHTML = '\u003ci class="fa fa-times text-danger"\u003e\u003c/i\u003e';
+                    confirmPassword.classList.remove('border-success');
+                    confirmPassword.classList.add('border-danger');
+                }
+            }
+            
+            // 表单提交验证
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                let errorMessage = '';
+                
+                // 验证必填字段
+                inputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        isValid = false;
+                        errorMessage = '请填写所有必填字段';
+                        input.classList.add('border-danger');
+                        setTimeout(() => input.classList.remove('border-danger'), 2000);
+                    }
+                });
+                
+                // 验证密码
+                if (password.value.length < 8) {
+                    isValid = false;
+                    errorMessage = '密码长度至少为8位';
+                    password.classList.add('border-danger');
+                    setTimeout(() => password.classList.remove('border-danger'), 2000);
+                }
+                
+                // 验证密码匹配
+                if (password.value !== confirmPassword.value) {
+                    isValid = false;
+                    errorMessage = '两次输入的密码不一致';
+                    confirmPassword.classList.add('border-danger');
+                    setTimeout(() => confirmPassword.classList.remove('border-danger'), 2000);
+                }
+                
+                // 验证协议勾选
+                const agreeTerms = document.getElementById('agree-terms');
+                if (!agreeTerms.checked) {
+                    isValid = false;
+                    errorMessage = '请阅读并同意用户协议和隐私政策';
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    
+                    // 创建临时错误提示
+                    let existingToast = document.querySelector('.error-toast');
+                    if (existingToast) existingToast.remove();
+                    
+                    const toast = document.createElement('div');
+                    toast.className = 'error-toast fixed top-4 right-4 bg-danger text-white px-4 py-3 rounded-md shadow-lg z-50 slide-in';
+                    toast.innerHTML = `\u003ci class="fa fa-exclamation-circle mr-2"\u003e\u003c/i\u003e${errorMessage}`;
+                    document.body.appendChild(toast);
+                    
+                    // 3秒后移除提示
+                    setTimeout(() => {
+                        toast.style.transition = 'all 0.3s ease';
+                        toast.style.transform = 'translateX(100%)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                }
+            });
+            
+            // 添加页面加载动画
+            const registerCard = document.querySelector('.register-card');
+            if (registerCard) {
+                registerCard.style.opacity = '0';
+                registerCard.style.transform = 'translateY(20px)';
+                registerCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                
+                setTimeout(() => {
+                    registerCard.style.opacity = '1';
+                    registerCard.style.transform = 'translateY(0)';
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
+

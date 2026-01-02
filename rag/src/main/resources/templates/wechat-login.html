@@ -1,0 +1,370 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信扫码登录 - 财务文档管理系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Tailwind 配置 */
+        @tailwind base;
+        @tailwind components;
+        @tailwind utilities;
+        
+        :root {
+            --primary: #3b82f6;
+            --primary-30: rgba(59, 130, 246, 0.3);
+            --primary-80: rgba(59, 130, 246, 0.8);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-tertiary: #9ca3af;
+            --border-primary: #e5e7eb;
+            --bg-secondary: #f9fafb;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        
+        /* 自定义工具类 */
+        
+        .focus-ring {
+            @apply focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2;
+        }
+        
+        .wechat-logo-container {
+            @apply mb-4;
+        }
+        
+        .wechat-logo {
+            @apply w-12 h-12 mx-auto bg-green-500 rounded-lg flex items-center justify-center text-white text-2xl;
+        }
+        .auth-container {
+            @apply min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .auth-card {
+            @apply w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1;
+        }
+        
+        .card-header {
+            @apply py-8 px-8 text-center border-b border-border-primary bg-gradient-to-r from-blue-50 to-indigo-50;
+        }
+        
+        .card-title {
+            @apply text-[clamp(1.5rem,3vw,2.25rem)] font-bold text-text-primary mb-2 tracking-tight;
+        }
+        
+        .btn {
+            @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-200;
+        }
+        
+        .btn-outline {
+            @apply border border-border-primary text-text-secondary hover:bg-blue-50 hover:border-primary px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 active:bg-blue-100;
+        }
+        
+        .btn-text {
+            @apply text-primary hover:text-primary/80 hover:bg-blue-50 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 active:bg-blue-100;
+        }
+        
+        .alert {
+            @apply px-4 py-3 rounded-md text-sm mb-4 transition-all duration-300;
+        }
+        
+        .alert-error {
+            @apply bg-red-50 text-red-600 border border-red-200 mx-8 animate-shake;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+        
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .qrcode-container {
+            @apply py-8 px-8 flex flex-col items-center space-y-6;
+        }
+        
+        .qrcode-wrapper {
+            @apply bg-white border-2 border-blue-100 rounded-xl p-6 shadow-md mb-2 text-center transition-all duration-300 hover:border-primary;
+            max-width: 90%;
+        }
+        
+        .qrcode-image {
+            @apply w-56 h-56 mb-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        @media (max-width: 640px) {
+            .qrcode-image {
+                @apply w-48 h-48;
+            }
+        }
+        
+        .qrcode-refresh {
+            @apply text-sm text-text-tertiary font-medium inline-flex items-center;
+        }
+        
+        .qrcode-refresh .countdown-timer {
+            @apply font-semibold text-primary mx-1 transition-all duration-300;
+        }
+        
+        .countdown-timer.low {
+            @apply text-warning;
+        }
+        
+        .countdown-timer.critical {
+            @apply text-danger animate-pulse;
+        }
+        
+        .scan-instructions {
+            @apply text-sm text-text-secondary text-center px-8 py-4 bg-blue-50/50 rounded-lg w-full max-w-xs;
+            line-height: 1.6;
+        }
+        
+        .scan-instructions p {
+            @apply mb-2 leading-relaxed;
+        }
+        
+        .login-status {
+            @apply flex items-center justify-center mb-6 text-text-secondary bg-blue-50 py-3 rounded-lg mx-8 transition-all duration-300;
+        }
+        
+        .status-icon {
+            @apply mr-2 text-primary animate-pulse;
+        }
+        
+        .auth-actions {
+            @apply flex flex-col gap-3 px-8 pb-8;
+        }
+        
+        .auth-actions button,
+        .auth-actions a {
+            text-align: center;
+            min-height: 44px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container relative overflow-hidden">
+        <!-- 背景装饰元素 -->
+        <div class="absolute -top-20 -right-20 w-64 h-64 bg-blue-200 rounded-full opacity-20 blur-3xl"></div>
+        <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-200 rounded-full opacity-20 blur-3xl"></div>
+        
+        <div class="auth-card fade-in relative z-10">
+            <div class="card-header">
+                <div class="wechat-logo-container">
+                    <div class="wechat-logo">
+                        <i class="fa fa-weixin"></i>
+                    </div>
+                </div>
+                <h1 class="card-title">微信扫码登录</h1>
+                <p class="text-text-tertiary">请使用微信扫描下方二维码</p>
+            </div>
+            
+            <!-- 错误信息显示 -->
+            <div th:if="${errorMessage}" class="alert alert-error px-8">
+                <p th:text="${errorMessage}"></p>
+            </div>
+            
+            <!-- 微信二维码区域 -->
+            <div class="qrcode-container">
+                <div class="qrcode-wrapper" id="qrcode-wrapper">
+                    <img th:src="${qrCodeBase64}" alt="微信登录二维码" class="qrcode-image" id="qrcode-image">
+                    <div class="qrcode-refresh">
+                        <i class="fa fa-clock-o mr-1"></i>
+                        <span id="countdown" class="countdown-timer">60</span>秒后自动刷新
+                    </div>
+                </div>
+                
+                <!-- 扫码提示 -->
+                <div class="scan-instructions">
+                    <p class="text-text-secondary font-medium">请打开微信，使用"扫一扫"功能扫描二维码</p>
+                    <p class="text-text-tertiary">确认登录后，页面将自动跳转</p>
+                </div>
+            </div>
+            
+            <!-- 登录状态提示 -->
+              <div class="login-status" id="login-status">
+                  <div class="status-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="transition-all duration-300">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                          <path d="M8 12l3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                  </div>
+                  <p>正在等待扫码...</p>
+              </div>
+            
+            <div class="auth-actions">
+                <button id="refresh-qrcode" class="btn btn-outline flex items-center justify-center gap-2 w-full">
+                    <i class="fa fa-refresh mr-2"></i> 刷新二维码
+                </button>
+                <a th:href="@{/login}" class="btn btn-text w-full">
+                    <i class="fa fa-user-circle-o mr-2"></i> 使用账号密码登录
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 倒计时功能
+        let countdown = 60;
+        const countdownElement = document.getElementById('countdown');
+        const loginStatusElement = document.getElementById('login-status');
+        const qrCodeImage = document.getElementById('qrcode-image');
+        
+        // 更新倒计时视觉效果
+        function updateCountdownVisual() {
+            countdownElement.classList.remove('low', 'critical');
+            
+            if (countdown <= 20) {
+                countdownElement.classList.add('low');
+                
+                // 添加轻微的缩放动画
+                countdownElement.animate([
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(1.1)' },
+                    { transform: 'scale(1)' }
+                ], { duration: 300, easing: 'ease-in-out' });
+            }
+            
+            if (countdown <= 10) {
+                countdownElement.classList.add('critical');
+            }
+        }
+        
+        // 开始倒计时
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            updateCountdownVisual();
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                refreshQRCode();
+            }
+        }, 1000);
+        
+        // 初始化倒计时视觉效果
+        updateCountdownVisual();
+        
+        // 状态变化动画函数
+        function changeStatus(message, isLoading = false) {
+            const statusText = loginStatusElement.querySelector('p');
+            const statusIcon = loginStatusElement.querySelector('.status-icon svg');
+            
+            // 淡出动画
+            loginStatusElement.style.opacity = '0';
+            loginStatusElement.style.transform = 'translateY(-5px)';
+            
+            setTimeout(() => {
+                statusText.textContent = message;
+                
+                if (isLoading) {
+                    statusIcon.classList.add('animate-spin');
+                } else {
+                    statusIcon.classList.remove('animate-spin');
+                }
+                
+                // 淡入动画
+                loginStatusElement.style.opacity = '1';
+                loginStatusElement.style.transform = 'translateY(0)';
+            }, 200);
+        }
+        
+        // 刷新二维码
+        function refreshQRCode() {
+            // 显示加载状态
+            changeStatus('正在刷新二维码...', true);
+            
+            // 为二维码添加加载状态
+            qrCodeImage.style.opacity = '0.6';
+            qrCodeImage.style.filter = 'grayscale(30%)';
+            
+            // 添加一个短暂的延迟以提供更好的用户体验
+            setTimeout(() => {
+                // 重新加载页面获取新的二维码
+                window.location.reload();
+            }, 500);
+        }
+        
+        // 点击刷新按钮
+        document.getElementById('refresh-qrcode').addEventListener('click', function() {
+            // 添加按钮按下效果
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+                refreshQRCode();
+            }, 150);
+        });
+        
+        // 为二维码添加点击提示
+        qrCodeImage.addEventListener('mouseover', function() {
+            this.style.cursor = 'pointer';
+            this.style.border = '2px dashed var(--primary)';
+        });
+        
+        qrCodeImage.addEventListener('mouseout', function() {
+            this.style.border = 'none';
+        });
+        
+        // 轮询检查登录状态（实际项目中应该实现）
+        function checkLoginStatus() {
+            // 注意：在实际应用中，需要实现真实的登录状态检查机制
+            // 1. 可以将state参数与用户会话关联存储
+            // 2. 通过Ajax轮询服务器检查该state是否已完成微信授权
+            // 3. 如果已完成授权，服务器可以返回重定向URL或直接执行重定向
+            
+            // 这里仅保留基础结构，实际项目中需要实现真实逻辑
+            const checkInterval = setInterval(() => {
+                // 模拟检查过程，实际应用中应该发送Ajax请求到服务器
+                // 例如：fetch('/wechat/check-status?state=' + state)
+                //      .then(response => response.json())
+                //      .then(data => {
+                //          if(data.status === 'scanned') {
+                //              changeStatus('已扫描，请确认登录...');
+                //          } else if(data.status === 'confirmed') {
+                //              changeStatus('登录成功，正在跳转...');
+                //              clearInterval(checkInterval);
+                //              setTimeout(() => window.location.href = data.redirectUrl, 1000);
+                //          } else if(data.loggedIn) {
+                //              clearInterval(checkInterval);
+                //              window.location.href = data.redirectUrl;
+                //          }
+                //      });
+            }, 2000);
+        }
+        
+        // 开始检查登录状态
+        checkLoginStatus();
+        
+        // 提供一个备用登录方式，直接跳转到微信授权页面
+        function directWechatAuth() {
+            // 如果二维码扫描有问题，可以直接点击跳转到微信授权页面
+            // 注意：需要在Controller中提供相应的重定向处理
+            const wechatOAuthUrl = /*[[${wechatOAuthUrl}]]*/ '';
+            if(wechatOAuthUrl) {
+                window.location.href = wechatOAuthUrl;
+            }
+        }
+        
+        // 为二维码添加点击事件，提供备用授权方式
+        qrCodeImage.addEventListener('click', directWechatAuth);
+    </script>
+</body>
+</html>
